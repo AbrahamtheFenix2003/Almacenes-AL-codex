@@ -1,35 +1,55 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react';
+import { onAuthStateChanged, type User as FirebaseUser, signOut } from 'firebase/auth';
 
-function App() {
-  const [count, setCount] = useState(0)
+// Importamos la instancia de 'auth' desde nuestro archivo de configuración central
+import { auth } from './lib/firebase';
 
+// Importamos la página de Login que creaste
+import { LoginPage } from './caracteristicas/autenticacion/pages/LoginPage';
+
+// --- Componente Placeholder para el Panel Principal ---
+// Esto es lo que verá el usuario después de iniciar sesión.
+// Más adelante, lo reemplazarás con tu layout completo del dashboard.
+function PanelPrincipal({ user }: { user: FirebaseUser }) {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white p-8 rounded-lg shadow-md text-center">
+        <h1 className="text-2xl font-bold mb-2">¡Bienvenido al Sistema!</h1>
+        <p className="text-gray-600 mb-4">Sesión iniciada como:</p>
+        <p className="font-semibold text-indigo-600 mb-6">{user.email}</p>
+        <button
+          onClick={() => signOut(auth)}
+          className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition-colors"
+        >
+          Cerrar Sesión
         </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default function App() {
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // onAuthStateChanged es el "oyente" de Firebase que se ejecuta
+    // cada vez que el estado de autenticación cambia. Es la clave de todo.
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    // Limpieza al desmontar el componente para evitar fugas de memoria
+    return () => unsubscribe();
+  }, []);
+
+  // Muestra un mensaje mientras Firebase verifica si ya existe una sesión
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center"><p>Verificando sesión...</p></div>;
+  }
+  
+  // Esta es la lógica principal:
+  // Si hay un objeto 'user', muestra el panel. Si es 'null', muestra la página de login.
+  return user ? <PanelPrincipal user={user} /> : <LoginPage />;
+}
+
