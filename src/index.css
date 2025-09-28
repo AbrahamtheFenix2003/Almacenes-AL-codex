@@ -1,70 +1,205 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
+/* CSS Variables generated from Kigen.design */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --boston-blue-50: #e8f2fb;
+  --boston-blue-100: #c8e1f7;
+  --boston-blue-200: #90c8f0;
+  --boston-blue-300: #5db1e3;
+  --boston-blue-400: #5099c5;
+  --boston-blue-500: #4687af;
+  --boston-blue-600: #396f90;
+  --boston-blue-700: #2a5570;
+  --boston-blue-800: #1b3b4e;
+  --boston-blue-900: #0c202c;
+  --boston-blue-950: #05121b;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  --font-size: 16px;
+  --background: #ffffff;
+  --foreground: var(--boston-blue-900);
+  --card: #ffffff;
+  --card-foreground: var(--boston-blue-900);
+  --popover: #ffffff;
+  --popover-foreground: var(--boston-blue-900);
+  --primary: var(--boston-blue-600);
+  --primary-foreground: #ffffff;
+  --secondary: var(--boston-blue-50);
+  --secondary-foreground: var(--boston-blue-900);
+  --muted: var(--boston-blue-100);
+  --muted-foreground: var(--boston-blue-600);
+  --accent: var(--boston-blue-200);
+  --accent-foreground: var(--boston-blue-800);
+  --destructive: #d4183d;
+  --destructive-foreground: #ffffff;
+  --border: var(--boston-blue-200);
+  --input: transparent;
+  --input-background: var(--boston-blue-50);
+  --switch-background: var(--boston-blue-300);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: var(--boston-blue-400);
+  --chart-1: var(--boston-blue-500);
+  --chart-2: var(--boston-blue-400);
+  --chart-3: var(--boston-blue-300);
+  --chart-4: var(--boston-blue-600);
+  --chart-5: var(--boston-blue-700);
+  --radius: 0.625rem;
+  --sidebar: var(--boston-blue-50);
+  --sidebar-foreground: var(--boston-blue-900);
+  --sidebar-primary: var(--boston-blue-600);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--boston-blue-100);
+  --sidebar-accent-foreground: var(--boston-blue-800);
+  --sidebar-border: var(--boston-blue-200);
+  --sidebar-ring: var(--boston-blue-400);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+.dark {
+  --background: var(--boston-blue-950);
+  --foreground: var(--boston-blue-50);
+  --card: var(--boston-blue-900);
+  --card-foreground: var(--boston-blue-50);
+  --popover: var(--boston-blue-900);
+  --popover-foreground: var(--boston-blue-50);
+  --primary: var(--boston-blue-400);
+  --primary-foreground: var(--boston-blue-950);
+  --secondary: var(--boston-blue-800);
+  --secondary-foreground: var(--boston-blue-100);
+  --muted: var(--boston-blue-800);
+  --muted-foreground: var(--boston-blue-300);
+  --accent: var(--boston-blue-700);
+  --accent-foreground: var(--boston-blue-100);
+  --destructive: #d4183d;
+  --destructive-foreground: #ffffff;
+  --border: var(--boston-blue-700);
+  --input: var(--boston-blue-800);
+  --ring: var(--boston-blue-500);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: var(--boston-blue-400);
+  --chart-2: var(--boston-blue-500);
+  --chart-3: var(--boston-blue-600);
+  --chart-4: var(--boston-blue-300);
+  --chart-5: var(--boston-blue-200);
+  --sidebar: var(--boston-blue-900);
+  --sidebar-foreground: var(--boston-blue-50);
+  --sidebar-primary: var(--boston-blue-400);
+  --sidebar-primary-foreground: var(--boston-blue-950);
+  --sidebar-accent: var(--boston-blue-800);
+  --sidebar-accent-foreground: var(--boston-blue-100);
+  --sidebar-border: var(--boston-blue-700);
+  --sidebar-ring: var(--boston-blue-500);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-  a:hover {
-    color: #747bff;
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   }
-  button {
-    background-color: #f9f9f9;
+}
+
+/**
+ * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
+ */
+@layer base {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    p {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
   }
+}
+
+html {
+  font-size: var(--font-size);
 }
