@@ -1,6 +1,5 @@
 ﻿import { Eye, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -68,6 +67,7 @@ const products = [
   },
 ];
 
+
 export function ProductTable() {
   return (
     <Card className="border-[color:var(--border)] bg-[color:var(--card)]/95">
@@ -109,30 +109,24 @@ export function ProductTable() {
                   <TableCell className="text-[color:var(--foreground)]/80">{product.supplier}</TableCell>
                   <TableCell className="pr-6">
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-9 w-9 rounded-full border-[color:var(--border)] bg-[color:var(--card)] text-[color:var(--primary)]"
+                      <button
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
                         aria-label={`Ver ${product.name}`}
                       >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-9 w-9 rounded-full border-[color:var(--border)] bg-[color:var(--card)] text-[color:var(--primary)]"
+                        <Eye className="h-4 w-4 text-blue-600" />
+                      </button>
+                      <button
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
                         aria-label={`Editar ${product.name}`}
                       >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-9 w-9 rounded-full border-[color:var(--border)] bg-[color:var(--card)] text-[#d43852] hover:bg-[#fde6ea]"
+                        <Pencil className="h-4 w-4 text-blue-600" />
+                      </button>
+                      <button
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-red-50 transition-colors"
                         aria-label={`Eliminar ${product.name}`}
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </button>
                     </div>
                   </TableCell>
                 </TableRow>

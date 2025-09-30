@@ -1,36 +1,23 @@
 ﻿import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut, type User as FirebaseUser } from "firebase/auth";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import PanelLayout from "@/layouts/PanelLayout";
 import { DashboardPage } from "@/caracteristicas/dashboard/pages/DashboardPage";
+import { ProductosPage } from "@/caracteristicas/catalogos/productos/pages/ProductosPage";
 import { LoginPage } from "@/caracteristicas/autenticacion/pages/LoginPage";
 import { auth } from "./lib/firebase";
 
-function PanelPrincipal({ user }: { user: FirebaseUser }) {
-  const name = user.displayName ?? user.email ?? "Usuario";
-
-  return (
-    <PanelLayout
-      onSignOut={() => signOut(auth)}
-      userName={name}
-      userEmail={user.email ?? undefined}
-    >
-      <DashboardPage />
-    </PanelLayout>
-  );
-}
-
-export default function App() {
+function PrivateRoute() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsub = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
     });
-
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
   if (loading) {
@@ -41,5 +28,30 @@ export default function App() {
     );
   }
 
-  return user ? <PanelPrincipal user={user} /> : <LoginPage />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const name = user.displayName ?? user.email ?? "Usuario";
+
+  return (
+    <PanelLayout onSignOut={() => signOut(auth)} userName={name} userEmail={user.email ?? undefined}>
+      <Routes>
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/catalogos/productos" element={<ProductosPage />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </PanelLayout>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/*" element={<PrivateRoute />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }

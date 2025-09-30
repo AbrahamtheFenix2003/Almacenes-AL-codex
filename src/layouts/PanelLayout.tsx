@@ -1,5 +1,6 @@
-﻿import { useState } from "react";
+﻿import { useState, useMemo } from "react";
 import type { ReactNode } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   AlertTriangle,
   Archive,
@@ -39,15 +40,13 @@ export type PanelLayoutProps = {
 type NavChild = {
   label: string;
   icon: LucideIcon;
-  href?: string;
-  active?: boolean;
+  href: string;
 };
 
 type NavItem = {
   label: string;
   icon: LucideIcon;
   href?: string;
-  active?: boolean;
   children?: NavChild[];
 };
 
@@ -55,66 +54,65 @@ const navItems: NavItem[] = [
   {
     label: "Dashboard",
     icon: LayoutDashboard,
-    href: "#",
-    active: true,
+    href: "/dashboard",
   },
   {
     label: "Catalogos",
     icon: Archive,
     children: [
-      { label: "Productos", icon: Package },
-      { label: "Proveedores", icon: Truck },
-      { label: "Clientes", icon: Users },
+      { label: "Productos", icon: Package, href: "/catalogos/productos" },
+      { label: "Proveedores", icon: Truck, href: "/catalogos/proveedores" },
+      { label: "Clientes", icon: Users, href: "/catalogos/clientes" },
     ],
   },
   {
     label: "Inventario",
     icon: Boxes,
     children: [
-      { label: "Movimientos", icon: ListChecks },
-      { label: "Ajustes de inventario", icon: ClipboardCheck },
+      { label: "Movimientos", icon: ListChecks, href: "/inventario/movimientos" },
+      { label: "Ajustes de inventario", icon: ClipboardCheck, href: "/inventario/ajustes" },
     ],
   },
   {
     label: "Compras",
     icon: ShoppingCart,
-    children: [{ label: "Ordenes de compra", icon: FileText }],
+    children: [{ label: "Ordenes de compra", icon: FileText, href: "/compras/ordenes" }],
   },
   {
     label: "Ventas",
     icon: Store,
     children: [
-      { label: "Punto de venta", icon: ShoppingCart },
-      { label: "Devolucion", icon: RotateCcw },
-      { label: "Clientes", icon: Users },
+      { label: "Punto de venta", icon: ShoppingCart, href: "/ventas/pdv" },
+      { label: "Devolucion", icon: RotateCcw, href: "/ventas/devoluciones" },
+      { label: "Clientes", icon: Users, href: "/ventas/clientes" },
     ],
   },
   {
     label: "Caja",
     icon: Coins,
     children: [
-      { label: "Caja diaria", icon: Wallet },
-      { label: "Pagos y cobros", icon: CreditCard },
+      { label: "Caja diaria", icon: Wallet, href: "/caja/diaria" },
+      { label: "Pagos y cobros", icon: CreditCard, href: "/caja/pagos" },
     ],
   },
   {
     label: "Reportes",
     icon: FileBarChart,
     children: [
-      { label: "Inventario", icon: Warehouse },
-      { label: "Compras", icon: FileText },
-      { label: "Ventas", icon: FileBarChart },
+      { label: "Inventario", icon: Warehouse, href: "/reportes/inventario" },
+      { label: "Compras", icon: FileText, href: "/reportes/compras" },
+      { label: "Ventas", icon: FileBarChart, href: "/reportes/ventas" },
     ],
   },
   {
     label: "Roles",
     icon: Briefcase,
-    children: [{ label: "Permisos", icon: ShieldCheck }],
+    children: [{ label: "Permisos", icon: ShieldCheck, href: "/roles/permisos" }],
   },
   {
     label: "Configuracion",
     icon: Settings,
-    href: "#",
+    href: "/configuracion",
   },
 ];
 
@@ -126,18 +124,26 @@ const childActive = "border-[color:var(--sidebar-border)] bg-[color:var(--second
 const childInactive = "text-[color:var(--sidebar-foreground)]/60 hover:border-[color:var(--sidebar-border)] hover:bg-white hover:text-[color:var(--sidebar-foreground)]";
 
 export default function PanelLayout({ children, onSignOut, userName, userEmail }: PanelLayoutProps) {
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    navItems.reduce<Record<string, boolean>>((acc, item) => {
-      if (item.children?.length) {
-        acc[item.label] = false;
+  const location = useLocation();
+
+  const initialOpen = useMemo(() => {
+    const groups: Record<string, boolean> = {};
+    navItems.forEach((it) => {
+      if (it.children) {
+        groups[it.label] = it.children.some((c) => location.pathname.startsWith(c.href));
       }
-      return acc;
-    }, {}),
-  );
+    });
+    return groups;
+  }, [location.pathname]);
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(initialOpen);
 
   const toggleGroup = (label: string) => {
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
   };
+
+  const isItemActive = (item: NavItem) =>
+    item.href ? location.pathname.startsWith(item.href) : item.children?.some((c) => location.pathname.startsWith(c.href));
 
   return (
     <div className="min-h-screen bg-[color:var(--background)] text-[color:var(--foreground)]">
@@ -157,7 +163,7 @@ export default function PanelLayout({ children, onSignOut, userName, userEmail }
               const Icon = item.icon;
               const hasChildren = Boolean(item.children?.length);
               const isOpen = hasChildren ? Boolean(openGroups[item.label]) : false;
-              const isActive = Boolean(item.active);
+              const active = isItemActive(item);
 
               return (
                 <li key={item.label}>
@@ -166,7 +172,7 @@ export default function PanelLayout({ children, onSignOut, userName, userEmail }
                       <button
                         type="button"
                         onClick={() => toggleGroup(item.label)}
-                        className={`${navBase} ${isOpen ? activeNav : inactiveNav}`}
+                        className={`${navBase} ${active || isOpen ? activeNav : inactiveNav}`}
                       >
                         <Icon className="h-4 w-4" />
                         <span className="flex-1 text-left">{item.label}</span>
@@ -180,18 +186,16 @@ export default function PanelLayout({ children, onSignOut, userName, userEmail }
                         <ul className="space-y-0.5 pl-2">
                           {item.children?.map((child) => {
                             const ChildIcon = child.icon;
-                            const isChildActive = Boolean(child.active);
+                            const isChildActive = location.pathname.startsWith(child.href);
                             return (
                               <li key={`${item.label}-${child.label}`}>
-                                <a
-                                  href={child.href ?? "#"}
-                                  className={`${childBase} ${
-                                    isChildActive ? childActive : childInactive
-                                  }`}
+                                <Link
+                                  to={child.href}
+                                  className={`${childBase} ${isChildActive ? childActive : childInactive}`}
                                 >
                                   <ChildIcon className="h-4 w-4" />
                                   <span>{child.label}</span>
-                                </a>
+                                </Link>
                               </li>
                             );
                           })}
@@ -199,13 +203,13 @@ export default function PanelLayout({ children, onSignOut, userName, userEmail }
                       ) : null}
                     </div>
                   ) : (
-                    <a
-                      href={item.href ?? "#"}
-                      className={`${navBase} ${isActive ? activeNav : inactiveNav}`}
+                    <Link
+                      to={item.href ?? "#"}
+                      className={`${navBase} ${active ? activeNav : inactiveNav}`}
                     >
                       <Icon className="h-4 w-4" />
                       <span className="flex-1 text-left">{item.label}</span>
-                    </a>
+                    </Link>
                   )}
                 </li>
               );

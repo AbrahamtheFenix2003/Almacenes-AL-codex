@@ -3,33 +3,49 @@
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
-  type UserCredential
-} from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { LoginForm } from '../components/LoginForm';
-import loginIllustration from '@/assets/carrologin.png';
+  type UserCredential,
+} from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { auth } from "@/lib/firebase";
+import { LoginForm } from "../components/LoginForm";
+import loginIllustration from "@/assets/carrologin.png";
 
 const googleProvider = new GoogleAuthProvider();
 
+type Credentials = {
+  email: string;
+  password: string;
+};
+
 export function LoginPage() {
-  
-  const handleLogin = (credentials: { email: string; password: string }): Promise<UserCredential> => {
-    return signInWithEmailAndPassword(auth, credentials.email, credentials.password)
-      .catch(error => {
-        if (error.code === 'auth/user-not-found') {
-          return createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
-        }
-        return Promise.reject(error);
-      });
+  const navigate = useNavigate();
+
+  const redirectToDashboard = () => {
+    navigate("/dashboard", { replace: true });
   };
 
-  const handleGoogleLogin = (): Promise<UserCredential> => {
-    return signInWithPopup(auth, googleProvider);
+  const handleLogin = async ({ email, password }: Credentials): Promise<UserCredential> => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      redirectToDashboard();
+      return userCredential;
+    } catch (error: unknown) {
+      if (typeof error === "object" && error && "code" in error && (error as { code: string }).code === "auth/user-not-found") {
+        const newUserCredential = await createUserWithEmailAndPassword(auth, email, password);
+        redirectToDashboard();
+        return newUserCredential;
+      }
+      throw error;
+    }
   };
-  
-  // Lógica para recuperar contraseña (puedes implementarla más adelante)
+
+  const handleGoogleLogin = async (): Promise<UserCredential> => {
+    const credential = await signInWithPopup(auth, googleProvider);
+    redirectToDashboard();
+    return credential;
+  };
+
   const handleForgotPassword = () => {
-    // Aquí iría la lógica para sendPasswordResetEmail de Firebase
     console.info("Forgot password");
   };
 
@@ -68,10 +84,9 @@ export function LoginPage() {
           <h2 className="text-2xl font-semibold">Gestiona tu almacén sin esfuerzo</h2>
           <p className="mt-3 text-sm text-slate-100/85">
             Centraliza los procesos clave, optimiza tus tiempos de entrega y mantén la trazabilidad en tiempo real.
-          -          </p>
+          </p>
         </div>
       </div>
     </div>
   );
 }
-
