@@ -15,9 +15,12 @@ interface ProductTableProps {
   productos: Producto[];
   loading: boolean;
   error?: string | null;
+  onEdit: (producto: Producto) => void;
+  onDelete: (productId: string, productName: string) => void;
+  onView: (producto: Producto) => void;
 }
 
-export function ProductTable({ productos, loading, error }: ProductTableProps) {
+export function ProductTable({ productos, loading, error, onEdit, onDelete, onView }: ProductTableProps) {
   // Función auxiliar para obtener el variant del Badge según el estado
   const getStatusVariant = (estado: string): "success" | "warning" | "danger" => {
     if (estado === "Activo") return "success";
@@ -96,18 +99,21 @@ export function ProductTable({ productos, loading, error }: ProductTableProps) {
                       <button
                         className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
                         aria-label={`Ver ${producto.nombre}`}
+                        onClick={() => onView(producto)}
                       >
                         <Eye className="h-4 w-4 text-blue-600" />
                       </button>
                       <button
                         className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
                         aria-label={`Editar ${producto.nombre}`}
+                        onClick={() => onEdit(producto)}
                       >
                         <Pencil className="h-4 w-4 text-blue-600" />
                       </button>
                       <button
                         className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-red-50 transition-colors"
                         aria-label={`Eliminar ${producto.nombre}`}
+                        onClick={() => onDelete(producto.id, producto.nombre)}
                       >
                         <Trash2 className="h-4 w-4 text-red-600" />
                       </button>

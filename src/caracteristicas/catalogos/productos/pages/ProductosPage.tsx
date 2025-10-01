@@ -1,9 +1,20 @@
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
-import { collection, onSnapshot, addDoc, Timestamp } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, query, where, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
 import { ProductStats } from "../components/ProductStats";
 import { ProductFilters } from "../components/ProductFilters";
 import { ProductTable } from "../components/ProductTable";
@@ -20,6 +31,8 @@ export interface Producto {
   stockMinimo: number;
   proveedor: string;
   estado: 'Activo' | 'Stock Bajo' | 'Agotado';
+  ubicacion?: string;
+  descripcion?: string;
 }
 
 export function ProductosPage() {
@@ -27,13 +40,31 @@ export function ProductosPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [productoAEditar, setProductoAEditar] = useState<Producto | null>(null);
+  const [productoAEliminar, setProductoAEliminar] = useState<{ id: string; nombre: string } | null>(null);
+  const [productoAVer, setProductoAVer] = useState<Producto | null>(null);
+
+  // Estados para filtros
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   useEffect(() => {
-    const productosRef = collection(db, 'productos');
+    setLoading(true);
+
+    // Construir la consulta con filtros
+    let productosQuery = collection(db, 'productos');
+
+    // Si hay categoría seleccionada, agregar filtro de categoría
+    if (selectedCategory) {
+      productosQuery = query(
+        collection(db, 'productos'),
+        where('categoria', '==', selectedCategory)
+      ) as any;
+    }
 
     // Escuchar cambios en tiempo real con onSnapshot
     const unsubscribe = onSnapshot(
-      productosRef,
+      productosQuery,
       (snapshot) => {
         const productosData: Producto[] = snapshot.docs.map((doc) => {
           const data = doc.data();
@@ -58,6 +89,8 @@ export function ProductosPage() {
             stockMinimo: data.stockMinimo,
             proveedor: data.proveedor,
             estado,
+            ubicacion: data.ubicacion || '',
+            descripcion: data.descripcion || '',
           };
         });
         setProductos(productosData);
@@ -73,7 +106,7 @@ export function ProductosPage() {
 
     // Cleanup: desuscribirse cuando el componente se desmonte
     return () => unsubscribe();
-  }, []);
+  }, [selectedCategory]);
 
   const handleCreateProduct = async (formData: ProductFormData): Promise<boolean> => {
     try {
@@ -104,6 +137,73 @@ export function ProductosPage() {
     }
   };
 
+  const handleUpdateProduct = async (formData: ProductFormData): Promise<boolean> => {
+    try {
+      if (!productoAEditar) return false;
+
+      const productoRef = doc(db, 'productos', productoAEditar.id);
+
+      await updateDoc(productoRef, {
+        nombre: formData.nombre,
+        codigo: formData.codigo || productoAEditar.codigo,
+        categoria: formData.categoria,
+        proveedor: formData.proveedor || 'Sin proveedor',
+        precio: formData.precio,
+        stock: formData.stock,
+        stockMinimo: formData.stockMinimo,
+        ubicacion: formData.ubicacion || '',
+        descripcion: formData.descripcion || '',
+        fechaModificacion: Timestamp.fromDate(new Date()),
+      });
+
+      setIsModalOpen(false);
+      return true;
+    } catch (err) {
+      console.error('Error al actualizar producto:', err);
+      alert('Error al actualizar el producto. Por favor, intenta de nuevo.');
+      return false;
+    }
+  };
+
+  const handleAbrirModalEdicion = (producto: Producto) => {
+    setProductoAEditar(producto);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmarEliminar = async () => {
+    if (!productoAEliminar) return;
+
+    try {
+      const productoRef = doc(db, 'productos', productoAEliminar.id);
+      await deleteDoc(productoRef);
+      setProductoAEliminar(null);
+    } catch (err) {
+      console.error('Error al eliminar producto:', err);
+      alert('Error al eliminar el producto. Por favor, intenta de nuevo.');
+    }
+  };
+
+  const handleAbrirModalEliminar = (productId: string, productName: string) => {
+    setProductoAEliminar({ id: productId, nombre: productName });
+  };
+
+  const handleAbrirModalVer = (producto: Producto) => {
+    setProductoAVer(producto);
+  };
+
+  // Filtrar productos localmente por término de búsqueda
+  const productosFiltrados = productos.filter((producto) => {
+    if (!searchTerm) return true;
+
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      producto.nombre.toLowerCase().includes(searchLower) ||
+      producto.codigo.toLowerCase().includes(searchLower) ||
+      producto.categoria.toLowerCase().includes(searchLower) ||
+      producto.proveedor.toLowerCase().includes(searchLower)
+    );
+  });
+
   return (
     <div className="space-y-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -122,22 +222,194 @@ export function ProductosPage() {
         </Button>
       </header>
 
-      <ProductStats />
-      <ProductFilters />
-      <ProductTable productos={productos} loading={loading} error={error} />
+      <ProductStats productos={productosFiltrados} />
+      <ProductFilters
+        searchTerm={searchTerm}
+        selectedCategory={selectedCategory}
+        onSearchChange={setSearchTerm}
+        onCategoryChange={setSelectedCategory}
+      />
+      <ProductTable
+        productos={productosFiltrados}
+        loading={loading}
+        error={error}
+        onEdit={handleAbrirModalEdicion}
+        onDelete={handleAbrirModalEliminar}
+        onView={handleAbrirModalVer}
+      />
 
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <Dialog open={isModalOpen} onOpenChange={(open) => {
+        setIsModalOpen(open);
+        if (!open) {
+          setProductoAEditar(null);
+        }
+      }}>
         <DialogContent onClose={() => setIsModalOpen(false)}>
           <DialogHeader>
-            <DialogTitle>Nuevo Producto</DialogTitle>
+            <DialogTitle>{productoAEditar ? "Editar Producto" : "Nuevo Producto"}</DialogTitle>
             <DialogDescription>
-              Agregue un nuevo producto al inventario. Los campos marcados con * son obligatorios.
+              {productoAEditar
+                ? "Modifique los datos del producto. Los campos marcados con * son obligatorios."
+                : "Agregue un nuevo producto al inventario. Los campos marcados con * son obligatorios."
+              }
             </DialogDescription>
           </DialogHeader>
           <ProductForm
-            onSubmit={handleCreateProduct}
+            onSubmit={productoAEditar ? handleUpdateProduct : handleCreateProduct}
             onCancel={() => setIsModalOpen(false)}
+            initialData={productoAEditar ? {
+              nombre: productoAEditar.nombre,
+              codigo: productoAEditar.codigo,
+              categoria: productoAEditar.categoria,
+              proveedor: productoAEditar.proveedor,
+              precio: productoAEditar.precio,
+              stock: productoAEditar.stock,
+              stockMinimo: productoAEditar.stockMinimo,
+              ubicacion: productoAEditar.ubicacion,
+              descripcion: productoAEditar.descripcion,
+            } : undefined}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* AlertDialog para confirmación de eliminación */}
+      <AlertDialog open={productoAEliminar !== null} onOpenChange={(open) => {
+        if (!open) setProductoAEliminar(null);
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que quieres eliminar el producto "{productoAEliminar?.nombre}"?
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmarEliminar}>
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog para ver detalles del producto */}
+      <Dialog open={productoAVer !== null} onOpenChange={(open) => {
+        if (!open) setProductoAVer(null);
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Detalles del Producto</DialogTitle>
+            <DialogDescription>
+              Información completa del producto seleccionado
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-[color:var(--muted-foreground)]">
+                  Nombre
+                </Label>
+                <p className="text-[color:var(--foreground)] font-semibold">
+                  {productoAVer?.nombre}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-[color:var(--muted-foreground)]">
+                  Código
+                </Label>
+                <p className="text-[color:var(--foreground)]">
+                  {productoAVer?.codigo}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-[color:var(--muted-foreground)]">
+                  Categoría
+                </Label>
+                <p className="text-[color:var(--foreground)]">
+                  {productoAVer?.categoria}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-[color:var(--muted-foreground)]">
+                  Proveedor
+                </Label>
+                <p className="text-[color:var(--foreground)]">
+                  {productoAVer?.proveedor}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-[color:var(--muted-foreground)]">
+                  Precio
+                </Label>
+                <p className="text-[color:var(--foreground)] font-semibold">
+                  ${productoAVer?.precio.toFixed(2)}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-[color:var(--muted-foreground)]">
+                  Stock Actual
+                </Label>
+                <p className="text-[color:var(--foreground)] font-semibold">
+                  {productoAVer?.stock}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-[color:var(--muted-foreground)]">
+                  Stock Mínimo
+                </Label>
+                <p className="text-[color:var(--foreground)]">
+                  {productoAVer?.stockMinimo}
+                </p>
+              </div>
+            </div>
+
+            {productoAVer?.ubicacion && (
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-[color:var(--muted-foreground)]">
+                  Ubicación en Almacén
+                </Label>
+                <p className="text-[color:var(--foreground)]">
+                  {productoAVer.ubicacion}
+                </p>
+              </div>
+            )}
+
+            {productoAVer?.descripcion && (
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-[color:var(--muted-foreground)]">
+                  Descripción
+                </Label>
+                <p className="text-[color:var(--foreground)]">
+                  {productoAVer.descripcion}
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <Label className="text-sm font-medium text-[color:var(--muted-foreground)]">
+                Estado
+              </Label>
+              <p className={`font-semibold ${
+                productoAVer?.estado === 'Activo' ? 'text-green-600' :
+                productoAVer?.estado === 'Stock Bajo' ? 'text-yellow-600' :
+                'text-red-600'
+              }`}>
+                {productoAVer?.estado}
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end pt-4">
+            <Button variant="outline" onClick={() => setProductoAVer(null)}>
+              Cerrar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

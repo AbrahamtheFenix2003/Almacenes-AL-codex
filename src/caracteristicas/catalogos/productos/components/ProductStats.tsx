@@ -1,38 +1,53 @@
-﻿import { Boxes, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+﻿import React from "react";
+import { Boxes, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Producto } from "../pages/ProductosPage";
 
-const stats = [
-  {
-    label: "Total productos",
-    value: "125",
-    helper: "Inventario total registrado",
-    icon: Boxes,
-    accentClass: "text-[color:var(--primary)]",
-  },
-  {
-    label: "Productos activos",
-    value: "108",
-    helper: "Disponibles para venta",
-    icon: CheckCircle2,
-    accentClass: "text-[#1f8f4d]",
-  },
-  {
-    label: "Stock bajo",
-    value: "9",
-    helper: "Requieren reposición",
-    icon: AlertTriangle,
-    accentClass: "text-[#b8860b]",
-  },
-  {
-    label: "Agotados",
-    value: "4",
-    helper: "Sin unidades disponibles",
-    icon: XCircle,
-    accentClass: "text-[#d43852]",
-  },
-];
+interface ProductStatsProps {
+  productos: Producto[];
+}
 
-export function ProductStats() {
+export function ProductStats({ productos }: ProductStatsProps) {
+  // Calcular estadísticas usando useMemo para optimizar el rendimiento
+  const { totalProductos, productosActivos, stockBajo, agotados } = React.useMemo(() => {
+    return {
+      totalProductos: productos.length,
+      productosActivos: productos.filter(p => p.estado === 'Activo').length,
+      stockBajo: productos.filter(p => p.estado === 'Stock Bajo').length,
+      agotados: productos.filter(p => p.estado === 'Agotado').length,
+    };
+  }, [productos]);
+
+  const stats = [
+    {
+      label: "Total productos",
+      value: totalProductos.toString(),
+      helper: "Inventario total registrado",
+      icon: Boxes,
+      accentClass: "text-[color:var(--primary)]",
+    },
+    {
+      label: "Productos activos",
+      value: productosActivos.toString(),
+      helper: "Disponibles para venta",
+      icon: CheckCircle2,
+      accentClass: "text-[#1f8f4d]",
+    },
+    {
+      label: "Stock bajo",
+      value: stockBajo.toString(),
+      helper: "Requieren reposición",
+      icon: AlertTriangle,
+      accentClass: "text-[#b8860b]",
+    },
+    {
+      label: "Agotados",
+      value: agotados.toString(),
+      helper: "Sin unidades disponibles",
+      icon: XCircle,
+      accentClass: "text-[#d43852]",
+    },
+  ];
   return (
     <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
       {stats.map(({ label, value, helper, icon: Icon, accentClass }) => (

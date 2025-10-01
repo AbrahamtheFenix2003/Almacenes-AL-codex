@@ -20,6 +20,7 @@ export interface ProductFormData {
 interface ProductFormProps {
   onSubmit: (data: ProductFormData) => Promise<boolean> | boolean;
   onCancel: () => void;
+  initialData?: Partial<ProductFormData>;
 }
 
 const createInitialFormState = (): ProductFormData => ({
@@ -34,8 +35,17 @@ const createInitialFormState = (): ProductFormData => ({
   descripcion: "",
 });
 
-export function ProductForm({ onSubmit, onCancel }: ProductFormProps) {
+export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProps) {
   const [formData, setFormData] = React.useState<ProductFormData>(createInitialFormState());
+
+  React.useEffect(() => {
+    if (initialData) {
+      setFormData((prev) => ({
+        ...prev,
+        ...initialData,
+      }));
+    }
+  }, [initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,7 +220,7 @@ export function ProductForm({ onSubmit, onCancel }: ProductFormProps) {
           Cancelar
         </Button>
         <Button type="submit" variant="default">
-          Crear Producto
+          {initialData ? "Guardar Cambios" : "Crear Producto"}
         </Button>
       </div>
     </form>
