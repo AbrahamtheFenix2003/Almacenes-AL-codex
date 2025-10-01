@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, query, where, Timestamp } from "firebase/firestore";
+import type { DocumentData, Query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -52,14 +53,15 @@ export function ProductosPage() {
     setLoading(true);
 
     // Construir la consulta con filtros
-    let productosQuery = collection(db, 'productos');
+    const productosRef = collection(db, 'productos');
+    let productosQuery: Query<DocumentData> = productosRef;
 
     // Si hay categoría seleccionada, agregar filtro de categoría
     if (selectedCategory) {
       productosQuery = query(
-        collection(db, 'productos'),
+        productosRef,
         where('categoria', '==', selectedCategory)
-      ) as any;
+      );
     }
 
     // Escuchar cambios en tiempo real con onSnapshot

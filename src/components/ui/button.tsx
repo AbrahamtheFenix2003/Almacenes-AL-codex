@@ -3,7 +3,7 @@
 import { cn } from "../../lib/utils";
 
 export type ButtonVariant = "default" | "outline" | "ghost";
-export type ButtonSize = "default" | "sm" | "lg";
+export type ButtonSize = "default" | "sm" | "lg" | "icon";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -20,6 +20,7 @@ const sizeStyles: Record<ButtonSize, string> = {
   default: "h-11 px-6 text-sm",
   sm: "h-9 px-4 text-sm",
   lg: "h-12 px-7 text-base",
+  icon: "h-10 w-10",
 };
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
