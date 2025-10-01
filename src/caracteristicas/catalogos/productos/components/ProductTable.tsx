@@ -66,7 +66,7 @@ export function ProductTable({ productos, loading, error }: ProductTableProps) {
           <Table className="min-w-full">
             <TableHeader>
               <TableRow className="bg-[color:var(--secondary)]">
-                <TableHead>ID</TableHead>
+                <TableHead>CODIGO</TableHead>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Categoría</TableHead>
                 <TableHead>Precio</TableHead>
@@ -79,7 +79,7 @@ export function ProductTable({ productos, loading, error }: ProductTableProps) {
             <TableBody>
               {productos.map((producto) => (
                 <TableRow key={producto.id} className="hover:bg-[color:var(--secondary)]/60">
-                  <TableCell className="font-medium text-[color:var(--foreground)]/85">{producto.id}</TableCell>
+                  <TableCell className="font-medium text-[color:var(--foreground)]/85">{producto.codigo}</TableCell>
                   <TableCell className="font-semibold text-[color:var(--foreground)]">{producto.nombre}</TableCell>
                   <TableCell className="text-[color:var(--foreground)]/70">{producto.categoria}</TableCell>
                   <TableCell className="text-[color:var(--foreground)]">${producto.precio.toFixed(2)}</TableCell>

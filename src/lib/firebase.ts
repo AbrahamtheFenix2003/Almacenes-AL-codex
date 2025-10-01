@@ -16,5 +16,5 @@ const firebaseConfig = {
 // Inicialización de Firebase
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app); // Exportamos 'auth' para usarlo en toda la app
-// Conectar a la base de datos específica 'almacenes-al'
-export const db = getFirestore(app, 'almacenes-al');
+// Conectar a la base de datos 'default' en southamerica-west1
+export const db = getFirestore(app);

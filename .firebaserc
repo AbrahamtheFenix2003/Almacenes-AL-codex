@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "almacenes-al"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }
