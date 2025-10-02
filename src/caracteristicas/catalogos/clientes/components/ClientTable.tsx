@@ -1,8 +1,9 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Eye, Pencil, Trash2, Building2, User, MapPin, Phone, Mail } from 'lucide-react';
+import type { Timestamp } from 'firebase/firestore';
 import type { Cliente } from '../pages/ClientesPage';
 
 interface ClientTableProps {
@@ -13,19 +14,39 @@ interface ClientTableProps {
   onView: (cliente: Cliente) => void;
 }
 
+type FirestoreDate = Timestamp | Date | string | number | null | undefined;
+
+const formatDate = (timestamp: FirestoreDate) => {
+  if (!timestamp) {
+    return 'N/A';
+  }
+
+  if (timestamp instanceof Date) {
+    return timestamp.toISOString().split('T')[0];
+  }
+
+  if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+    const parsed = new Date(timestamp);
+    return Number.isNaN(parsed.getTime()) ? 'N/A' : parsed.toISOString().split('T')[0];
+  }
+
+  if (typeof (timestamp as Timestamp).toDate === 'function') {
+    const parsed = (timestamp as Timestamp).toDate();
+    return parsed.toISOString().split('T')[0];
+  }
+
+  return 'N/A';
+};
+
+const formatCurrency = (amount: number | null | undefined) => {
+  const numericAmount = typeof amount === 'number' && Number.isFinite(amount) ? amount : 0;
+  return `CRC ${numericAmount.toLocaleString('es-CR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })}`;
+};
+
 export function ClientTable({ clientes, loading, onEdit, onDelete, onView }: ClientTableProps) {
-  // Formatear fecha de Firestore Timestamp
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'N/A';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toISOString().split('T')[0];
-  };
-
-  // Formatear moneda
-  const formatCurrency = (amount: number) => {
-    return `₡${amount.toLocaleString('es-CR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-  };
-
   if (loading) {
     return (
       <Card className="border-gray-200">
@@ -68,8 +89,8 @@ export function ClientTable({ clientes, loading, onEdit, onDelete, onView }: Cli
               <TableHead>Tipo</TableHead>
               <TableHead className="text-right">Compras</TableHead>
               <TableHead className="text-right">Monto Total</TableHead>
-              <TableHead>Última Compra</TableHead>
-              <TableHead className="text-right">Crédito</TableHead>
+              <TableHead>Ultima Compra</TableHead>
+              <TableHead className="text-right">Credito</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead className="text-center w-32">Acciones</TableHead>
             </TableRow>
@@ -110,7 +131,7 @@ export function ClientTable({ clientes, loading, onEdit, onDelete, onView }: Cli
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={cliente.tipo === 'Empresa' ? 'default' : 'secondary'}>
+                  <Badge variant={cliente.tipo === 'Empresa' ? 'default' : 'muted'}>
                     {cliente.tipo}
                   </Badge>
                 </TableCell>

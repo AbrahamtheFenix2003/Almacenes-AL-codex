@@ -22,11 +22,39 @@ export interface Cliente {
   estado: 'Activo' | 'Inactivo';
   comprasTotales: number;
   montoTotalComprado: number;
-  ultimaCompra: Timestamp;
+  ultimaCompra: Timestamp | null;
   limiteCredito: number;
   creditoDisponible: number;
-  fechaCreacion: Timestamp;
+  fechaCreacion: Timestamp | null;
 }
+
+type FirestoreDate = Timestamp | Date | string | number | null | undefined;
+
+const getDateFromFirestore = (value: FirestoreDate): Date | null => {
+  if (!value) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  if (typeof (value as Timestamp).toDate === 'function') {
+    return (value as Timestamp).toDate();
+  }
+
+  return null;
+};
+
+const formatLocaleDate = (value: FirestoreDate, locale = 'es-CR') => {
+  const date = getDateFromFirestore(value);
+  return date ? date.toLocaleDateString(locale) : 'N/A';
+};
 
 export function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -43,9 +71,9 @@ export function ClientesPage() {
     const unsubscribe = onSnapshot(
       collection(db, 'clientes'),
       (snapshot) => {
-        const clientesData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
+        const clientesData = snapshot.docs.map((item) => ({
+          id: item.id,
+          ...item.data(),
         })) as Cliente[];
         setClientes(clientesData);
         setLoading(false);
@@ -53,26 +81,28 @@ export function ClientesPage() {
       (error) => {
         console.error('Error al cargar clientes:', error);
         setLoading(false);
-      }
+      },
     );
 
     return () => unsubscribe();
   }, []);
 
   // Filtrado de clientes
-  const clientesFiltrados = clientes.filter(cliente => {
+  const clientesFiltrados = clientes.filter((cliente) => {
     const searchLower = searchTerm.toLowerCase();
     return (
-      cliente.nombre.toLowerCase().includes(searchLower) ||
-      cliente.email.toLowerCase().includes(searchLower) ||
-      cliente.telefono.includes(searchTerm) ||
-      cliente.id.toLowerCase().includes(searchLower) ||
-      cliente.empresa?.toLowerCase().includes(searchLower)
+      cliente.nombre.toLowerCase().includes(searchLower)
+      || cliente.email.toLowerCase().includes(searchLower)
+      || cliente.telefono.includes(searchTerm)
+      || cliente.id.toLowerCase().includes(searchLower)
+      || cliente.empresa?.toLowerCase().includes(searchLower)
     );
   });
 
   // Crear cliente
-  const handleCreateCliente = async (data: Omit<Cliente, 'id' | 'comprasTotales' | 'montoTotalComprado' | 'ultimaCompra' | 'creditoDisponible' | 'fechaCreacion' | 'estado'>) => {
+  const handleCreateCliente = async (
+    data: Omit<Cliente, 'id' | 'comprasTotales' | 'montoTotalComprado' | 'ultimaCompra' | 'creditoDisponible' | 'fechaCreacion' | 'estado'>,
+  ) => {
     try {
       await addDoc(collection(db, 'clientes'), {
         ...data,
@@ -81,7 +111,7 @@ export function ClientesPage() {
         montoTotalComprado: 0,
         creditoDisponible: data.limiteCredito,
         fechaCreacion: serverTimestamp(),
-        ultimaCompra: serverTimestamp()
+        ultimaCompra: serverTimestamp(),
       });
       setIsFormOpen(false);
     } catch (error) {
@@ -90,14 +120,18 @@ export function ClientesPage() {
   };
 
   // Actualizar cliente
-  const handleUpdateCliente = async (data: Omit<Cliente, 'id' | 'comprasTotales' | 'montoTotalComprado' | 'ultimaCompra' | 'creditoDisponible' | 'fechaCreacion' | 'estado'>) => {
-    if (!selectedCliente) return;
+  const handleUpdateCliente = async (
+    data: Omit<Cliente, 'id' | 'comprasTotales' | 'montoTotalComprado' | 'ultimaCompra' | 'creditoDisponible' | 'fechaCreacion' | 'estado'>,
+  ) => {
+    if (!selectedCliente) {
+      return;
+    }
 
     try {
       const clienteRef = doc(db, 'clientes', selectedCliente.id);
       await updateDoc(clienteRef, {
         ...data,
-        creditoDisponible: data.limiteCredito - (selectedCliente.limiteCredito - selectedCliente.creditoDisponible)
+        creditoDisponible: data.limiteCredito - (selectedCliente.limiteCredito - selectedCliente.creditoDisponible),
       });
       setIsFormOpen(false);
       setSelectedCliente(null);
@@ -108,7 +142,9 @@ export function ClientesPage() {
 
   // Eliminar cliente
   const handleDeleteCliente = async () => {
-    if (!clienteToDelete) return;
+    if (!clienteToDelete) {
+      return;
+    }
 
     try {
       await deleteDoc(doc(db, 'clientes', clienteToDelete.id));
@@ -119,19 +155,19 @@ export function ClientesPage() {
     }
   };
 
-  // Abrir formulario de creación
+  // Abrir formulario de creacion
   const handleOpenCreateForm = () => {
     setSelectedCliente(null);
     setIsFormOpen(true);
   };
 
-  // Abrir formulario de edición
+  // Abrir formulario de edicion
   const handleOpenEditForm = (cliente: Cliente) => {
     setSelectedCliente(cliente);
     setIsFormOpen(true);
   };
 
-  // Abrir diálogo de eliminación
+  // Abrir dialogo de eliminacion
   const handleOpenDeleteDialog = (id: string, nombre: string) => {
     setClienteToDelete({ id, nombre });
     setIsDeleteDialogOpen(true);
@@ -143,7 +179,7 @@ export function ClientesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
           <p className="text-sm text-gray-600 mt-1">
-            Gestiona la información de tus clientes y su historial de compras
+            Gestiona la informacion de tus clientes y su historial de compras
           </p>
         </div>
         <Button onClick={handleOpenCreateForm}>
@@ -162,7 +198,7 @@ export function ClientesPage() {
         onView={(cliente) => setClienteToView(cliente)}
       />
 
-      {/* Formulario de creación/edición */}
+      {/* Formulario de creacion/edicion */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -181,14 +217,14 @@ export function ClientesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de confirmación de eliminación */}
+      {/* Dialogo de confirmacion de eliminacion */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>Estas seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción eliminará permanentemente el cliente "{clienteToDelete?.nombre}".
-              Esta acción no se puede deshacer.
+              Esta accion eliminara permanentemente el cliente "{clienteToDelete?.nombre}".
+              Esta accion no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -206,9 +242,14 @@ export function ClientesPage() {
       </AlertDialog>
 
       {/* Dialog para ver detalles del cliente */}
-      <Dialog open={clienteToView !== null} onOpenChange={(open) => {
-        if (!open) setClienteToView(null);
-      }}>
+      <Dialog
+        open={clienteToView !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setClienteToView(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Detalles del Cliente</DialogTitle>
@@ -233,13 +274,13 @@ export function ClientesPage() {
             )}
 
             <div className="space-y-1">
-              <Label className="text-sm font-medium text-gray-600">Ubicación</Label>
+              <Label className="text-sm font-medium text-gray-600">Ubicacion</Label>
               <p className="text-gray-900">{clienteToView?.ubicacion}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label className="text-sm font-medium text-gray-600">Teléfono</Label>
+                <Label className="text-sm font-medium text-gray-600">Telefono</Label>
                 <p className="text-gray-900">{clienteToView?.telefono}</p>
               </div>
               <div className="space-y-1">
@@ -269,32 +310,39 @@ export function ClientesPage() {
               <div className="space-y-1">
                 <Label className="text-sm font-medium text-gray-600">Monto Total Comprado</Label>
                 <p className="text-gray-900 font-semibold">
-                  ₡{clienteToView?.montoTotalComprado.toLocaleString('es-CR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  CRC {clienteToView?.montoTotalComprado.toLocaleString('es-CR', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label className="text-sm font-medium text-gray-600">Límite de Crédito</Label>
+                <Label className="text-sm font-medium text-gray-600">Limite de Credito</Label>
                 <p className="text-gray-900 font-semibold">
-                  ₡{clienteToView?.limiteCredito.toLocaleString('es-CR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  CRC {clienteToView?.limiteCredito.toLocaleString('es-CR', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}
                 </p>
               </div>
               <div className="space-y-1">
-                <Label className="text-sm font-medium text-gray-600">Crédito Disponible</Label>
+                <Label className="text-sm font-medium text-gray-600">Credito Disponible</Label>
                 <p className="text-gray-900 font-semibold">
-                  ₡{clienteToView?.creditoDisponible.toLocaleString('es-CR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  CRC {clienteToView?.creditoDisponible.toLocaleString('es-CR', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}
                 </p>
               </div>
             </div>
 
             <div className="space-y-1">
-              <Label className="text-sm font-medium text-gray-600">Última Compra</Label>
+              <Label className="text-sm font-medium text-gray-600">Ultima Compra</Label>
               <p className="text-gray-900">
-                {clienteToView?.ultimaCompra ?
-                  (clienteToView.ultimaCompra.toDate ? clienteToView.ultimaCompra.toDate() : new Date(clienteToView.ultimaCompra)).toLocaleDateString('es-CR')
-                  : 'N/A'}
+                {formatLocaleDate(clienteToView?.ultimaCompra)}
               </p>
             </div>
           </div>
