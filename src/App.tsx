@@ -6,6 +6,7 @@ import PanelLayout from "@/layouts/PanelLayout";
 import { DashboardPage } from "@/caracteristicas/dashboard/pages/DashboardPage";
 import { ProductosPage } from "@/caracteristicas/catalogos/productos/pages/ProductosPage";
 import { ProveedoresPage } from "@/caracteristicas/catalogos/proveedores/pages/ProveedoresPage";
+import { ClientesPage } from "@/caracteristicas/catalogos/clientes/pages/ClientesPage";
 import { LoginPage } from "@/caracteristicas/autenticacion/pages/LoginPage";
 import { auth } from "./lib/firebase";
 
@@ -41,6 +42,7 @@ function PrivateRoute() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/catalogos/productos" element={<ProductosPage />} />
         <Route path="/catalogos/proveedores" element={<ProveedoresPage />} />
+        <Route path="/catalogos/clientes" element={<ClientesPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </PanelLayout>
