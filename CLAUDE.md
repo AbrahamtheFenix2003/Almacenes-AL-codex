@@ -29,13 +29,51 @@ The codebase follows a feature-based architecture organized by business domains:
 src/
 ├── caracteristicas/           # Feature modules by business domain
 │   ├── autenticacion/        # Authentication features
+│   │   ├── components/       # Auth-specific components
+│   │   └── pages/            # Login, register pages
 │   ├── dashboard/            # Dashboard and analytics
-│   └── catalogos/           # Product catalogs and management
-├── components/ui/           # Reusable UI components
-├── layouts/                 # Layout components
-├── lib/                     # Utilities and configurations
-└── assets/                  # Static assets
+│   │   ├── components/       # Dashboard widgets and charts
+│   │   └── pages/            # Main dashboard page
+│   ├── catalogos/            # Product catalogs and management
+│   │   ├── productos/        # Products module
+│   │   │   ├── components/
+│   │   │   └── pages/
+│   │   ├── proveedores/      # Suppliers module
+│   │   │   ├── components/
+│   │   │   └── pages/
+│   │   └── clientes/         # Customers module
+│   │       ├── components/
+│   │       └── pages/
+│   ├── inventario/           # Inventory management
+│   │   ├── movimientos/      # Inventory movements
+│   │   │   ├── components/
+│   │   │   └── pages/
+│   │   └── ajustes/          # Inventory adjustments
+│   │       ├── components/
+│   │       └── pages/
+│   ├── compras/              # Purchase management
+│   │   └── ordenesDeCompra/  # Purchase orders
+│   │       ├── components/
+│   │       └── pages/
+│   ├── ventas/               # Sales management
+│   │   ├── puntoDeVenta/     # Point of sale
+│   │   └── devoluciones/     # Returns
+│   ├── caja/                 # Cash management
+│   │   ├── cajaDiaria/       # Daily cash register
+│   │   └── pagosCobros/      # Payments and collections
+│   ├── reportes/             # Reports module
+│   └── administracion/       # Administration
+│       ├── roles/            # Role management
+│       ├── permisos/         # Permissions
+│       └── configuracion/    # Configuration
+├── components/ui/            # Reusable UI components (shadcn/ui)
+├── layouts/                  # Layout components (PanelLayout)
+├── lib/                      # Utilities and configurations (firebase)
+├── hooks/                    # Custom React hooks
+└── assets/                   # Static assets
 ```
+
+**IMPORTANT**: When creating new features, ALWAYS check if a folder already exists for that module. Use the existing folder structure and naming conventions (camelCase for module names).
 
 ### Key Architectural Patterns
 
