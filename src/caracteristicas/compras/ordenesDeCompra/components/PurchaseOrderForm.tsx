@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,9 +39,14 @@ export interface OrderFormData {
   proveedorNombre: string;
   fechaEntrega: string;
   items: OrderItem[];
-  subtotal: number;
-  impuestos: number;
   total: number;
+}
+
+export interface InitialOrderData {
+  id: string;
+  proveedorId: string;
+  fechaEntrega: string;
+  items: OrderItem[];
 }
 
 interface PurchaseOrderFormProps {
@@ -49,6 +54,7 @@ interface PurchaseOrderFormProps {
   proveedores: Proveedor[];
   onSubmit: (data: OrderFormData) => void;
   onCancel: () => void;
+  initialData?: InitialOrderData;
 }
 
 export function PurchaseOrderForm({
@@ -56,6 +62,7 @@ export function PurchaseOrderForm({
   proveedores,
   onSubmit,
   onCancel,
+  initialData,
 }: PurchaseOrderFormProps) {
   const [proveedorId, setProveedorId] = useState("");
   const [fechaEntrega, setFechaEntrega] = useState("");
@@ -64,18 +71,21 @@ export function PurchaseOrderForm({
   const [cantidad, setCantidad] = useState<number>(1);
   const [costoUnitario, setCostoUnitario] = useState<number>(0);
 
-  // Calcular totales
-  const { subtotal, impuestos, total } = useMemo(() => {
-    const sub = items.reduce(
+  // Pre-llenar el formulario cuando hay initialData
+  useEffect(() => {
+    if (initialData) {
+      setProveedorId(initialData.proveedorId);
+      setFechaEntrega(initialData.fechaEntrega);
+      setItems(initialData.items);
+    }
+  }, [initialData]);
+
+  // Calcular total
+  const total = useMemo(() => {
+    return items.reduce(
       (acc, item) => acc + item.cantidad * item.costoUnitario,
       0
     );
-    const imp = sub * 0.21; // 21% IVA
-    return {
-      subtotal: sub,
-      impuestos: imp,
-      total: sub + imp,
-    };
   }, [items]);
 
   const handleAddProduct = () => {
@@ -164,8 +174,6 @@ export function PurchaseOrderForm({
       proveedorNombre: proveedor.nombre,
       fechaEntrega,
       items,
-      subtotal,
-      impuestos,
       total,
     });
   };
@@ -352,15 +360,7 @@ export function PurchaseOrderForm({
         {items.length > 0 && (
           <div className="flex justify-end">
             <div className="w-full max-w-sm space-y-2 rounded-lg border p-4 bg-muted/30">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Subtotal:</span>
-                <span className="font-medium">€{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Impuestos (21%):</span>
-                <span className="font-medium">€{impuestos.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between border-t pt-2">
+              <div className="flex justify-between">
                 <span className="font-semibold">Total:</span>
                 <span className="text-lg font-bold">€{total.toFixed(2)}</span>
               </div>
@@ -374,7 +374,9 @@ export function PurchaseOrderForm({
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit">Crear Orden de Compra</Button>
+        <Button type="submit">
+          {initialData ? "Guardar Cambios" : "Crear Orden de Compra"}
+        </Button>
       </div>
     </form>
   );

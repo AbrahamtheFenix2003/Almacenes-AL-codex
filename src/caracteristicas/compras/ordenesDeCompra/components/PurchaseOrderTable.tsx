@@ -18,6 +18,7 @@ export interface OrdenCompra {
     nombre: string;
     codigo: string;
   };
+  proveedorId?: string; // ID del proveedor para edición
   productos: string;
   fechaEntrega: string;
   total: number;
@@ -63,9 +64,12 @@ const estadoBadgeClass = (estado: OrdenCompra["estado"]): string => {
 
 interface PurchaseOrderTableProps {
   ordenes: OrdenCompra[];
+  onView: (orden: OrdenCompra) => void;
+  onEdit: (orden: OrdenCompra) => void;
+  onDelete: (ordenId: string, numeroOrden: string) => void;
 }
 
-export function PurchaseOrderTable({ ordenes }: PurchaseOrderTableProps) {
+export function PurchaseOrderTable({ ordenes, onView, onEdit, onDelete }: PurchaseOrderTableProps) {
   if (ordenes.length === 0) {
     return (
       <div className="rounded-md border p-8">
@@ -139,13 +143,8 @@ export function PurchaseOrderTable({ ordenes }: PurchaseOrderTableProps) {
                 </TableCell>
                 <TableCell>{orden.fechaEntrega}</TableCell>
                 <TableCell>
-                  <div className="space-y-1">
-                    <div className="font-semibold">
-                      €{orden.total.toLocaleString("es-ES", { minimumFractionDigits: 2 })}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      + €{(orden.total * 0.21).toLocaleString("es-ES", { minimumFractionDigits: 2 })} impuestos
-                    </div>
+                  <div className="font-semibold">
+                    €{orden.total.toLocaleString("es-ES", { minimumFractionDigits: 2 })}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -164,14 +163,29 @@ export function PurchaseOrderTable({ ordenes }: PurchaseOrderTableProps) {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onView(orden)}
+                      title="Ver detalles"
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEdit(orden)}
+                      title="Editar orden"
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon">
-                      <Trash2 className="h-4 w-4" />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete(orden.id, orden.numeroOrden)}
+                      title="Eliminar orden"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 </TableCell>

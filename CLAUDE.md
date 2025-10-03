@@ -117,3 +117,72 @@ The project uses `@/` as an alias for the `src/` directory, configured in `vite.
 - Custom theme extending default palette with business-specific colors
 - CSS custom properties for dynamic theming
 - Consistent component styling patterns using utility classes
+
+## Firestore Data Schema
+
+### Collections Structure
+
+**proveedores**:
+- `empresa` (string): Company name (used as display name)
+- `contactoNombre` (string): Contact person name
+- `contactoEmail` (string): Contact email
+- `contactoTelefono` (string): Contact phone
+- `codigo` (string): Provider code (e.g., "PROV001")
+- `estado` (string): Status ("Activo", etc.)
+- `calificacion` (number): Rating
+- `ubicacion` (string): Location
+- `fechaCreacion` (Timestamp): Creation date
+- `fechaModificacion` (Timestamp): Last modification date
+
+**productos**:
+- `nombre` (string): Product name
+- `codigo` (string): Product code (e.g., "TEC001")
+- `categoria` (string): Category
+- `precio` (number): Price
+- `stock` (number): Current stock
+- `stockMinimo` (number): Minimum stock threshold
+- `proveedor` (string): Supplier name
+- `ubicacion` (string): Warehouse location
+- `descripcion` (string): Description
+- `fechaCreacion` (Timestamp): Creation date
+
+**ordenesCompra**:
+- `numeroOrden` (string): Order number (e.g., "COMP-2025-001")
+- `fecha` (string): Order date
+- `proveedorId` (string): Reference to provider
+- `proveedorNombre` (string): Provider name
+- `proveedorContacto` (string): Provider contact
+- `fechaEntrega` (string): Delivery date
+- `productosResumen` (string): Products summary text
+- `cantidadProductos` (number): Number of products
+- `total` (number): Total amount (no taxes)
+- `estado` (string): Status ("Pendiente", "Aprobado", "En Tránsito", "Recibido", "Cancelado")
+- `usuario` (string): User who created the order
+- `creadoEn` (Timestamp): Creation timestamp
+- **Sub-collection**: `items/`
+  - `productoId` (string): Product reference
+  - `productoNombre` (string): Product name
+  - `productoCodigo` (string): Product code
+  - `cantidad` (number): Quantity
+  - `costoUnitario` (number): Unit cost
+  - `subtotal` (number): Item subtotal
+  - `creadoEn` (Timestamp): Creation timestamp
+
+**ajustes**:
+- Inventory adjustments with approval workflow
+- Contains adjustment data and references to products
+
+**movimientos**:
+- Inventory movement records
+- Linked to adjustments when approved
+
+**clientes**:
+- Customer information
+
+## Important Implementation Notes
+
+1. **Provider Data**: Always use `empresa` field for provider name, not `nombre`
+2. **Purchase Orders**: No tax calculations - only total amounts
+3. **Batch Operations**: Use `writeBatch()` for orders with items sub-collection
+4. **Real-time Updates**: Use `onSnapshot()` for live data in tables
+5. **Form Validation**: Required fields must be validated before submission

@@ -1,12 +1,32 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Plus, Package, Loader2 } from "lucide-react";
 import { PurchaseOrderStats } from "../components/PurchaseOrderStats";
 import { PurchaseOrderFilters } from "../components/PurchaseOrderFilters";
 import { PurchaseOrderTable, type OrdenCompra } from "../components/PurchaseOrderTable";
@@ -15,6 +35,8 @@ import {
   type Producto,
   type Proveedor,
   type OrderFormData,
+  type InitialOrderData,
+  type OrderItem,
 } from "../components/PurchaseOrderForm";
 import { db, auth } from "@/lib/firebase";
 import {
@@ -24,6 +46,8 @@ import {
   doc,
   writeBatch,
   serverTimestamp,
+  updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 
 export default function OrdenesCompraPage() {
@@ -32,6 +56,20 @@ export default function OrdenesCompraPage() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Estados para Ver orden
+  const [ordenAVer, setOrdenAVer] = useState<OrdenCompra | null>(null);
+  const [itemsAVer, setItemsAVer] = useState<OrderItem[]>([]);
+  const [loadingItems, setLoadingItems] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+
+  // Estados para Editar orden
+  const [ordenAEditar, setOrdenAEditar] = useState<InitialOrderData | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // Estados para Eliminar orden
+  const [ordenAEliminar, setOrdenAEliminar] = useState<{ id: string; numero: string } | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Leer órdenes de compra en tiempo real
   useEffect(() => {
@@ -48,9 +86,10 @@ export default function OrdenesCompraPage() {
               nombre: data.proveedorNombre || "",
               codigo: data.proveedorContacto || "",
             },
+            proveedorId: data.proveedorId || "", // Añadimos este campo
             productos: data.productosResumen || "",
             fechaEntrega: data.fechaEntrega || "",
-            total: data.subtotal || 0,
+            total: data.total || 0,
             estado: data.estado || "Pendiente",
             usuario: data.usuario || "",
           };
@@ -91,8 +130,8 @@ export default function OrdenesCompraPage() {
         const data = doc.data();
         return {
           id: doc.id,
-          nombre: data.nombre || "",
-          contacto: data.contacto || "",
+          nombre: data.empresa || "",
+          contacto: data.contactoNombre || "",
         };
       });
       setProveedores(proveedoresData);
@@ -126,8 +165,6 @@ export default function OrdenesCompraPage() {
         fechaEntrega: formData.fechaEntrega,
         productosResumen,
         cantidadProductos: formData.items.length,
-        subtotal: formData.subtotal,
-        impuestos: formData.impuestos,
         total: formData.total,
         estado: "Pendiente",
         usuario: userName,
@@ -158,6 +195,167 @@ export default function OrdenesCompraPage() {
     } catch (error) {
       console.error("Error al crear orden:", error);
       alert("Error al crear la orden de compra");
+    }
+  };
+
+  // Ver orden con detalles
+  const handleViewOrder = async (orden: OrdenCompra) => {
+    setOrdenAVer(orden);
+    setIsViewDialogOpen(true);
+    setLoadingItems(true);
+    setItemsAVer([]);
+
+    try {
+      // Cargar items de la sub-colección
+      const itemsSnapshot = await getDocs(
+        collection(db, "ordenesCompra", orden.id, "items")
+      );
+      const items: OrderItem[] = itemsSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          productoId: data.productoId || "",
+          productoNombre: data.productoNombre || "",
+          productoCodigo: data.productoCodigo || "",
+          cantidad: data.cantidad || 0,
+          costoUnitario: data.costoUnitario || 0,
+        };
+      });
+      setItemsAVer(items);
+    } catch (error) {
+      console.error("Error al cargar items:", error);
+      alert("Error al cargar los detalles de la orden");
+    } finally {
+      setLoadingItems(false);
+    }
+  };
+
+  // Editar orden
+  const handleEditOrder = async (orden: OrdenCompra) => {
+    setLoadingItems(true);
+
+    try {
+      // Cargar items de la sub-colección
+      const itemsSnapshot = await getDocs(
+        collection(db, "ordenesCompra", orden.id, "items")
+      );
+      const items: OrderItem[] = itemsSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          productoId: data.productoId || "",
+          productoNombre: data.productoNombre || "",
+          productoCodigo: data.productoCodigo || "",
+          cantidad: data.cantidad || 0,
+          costoUnitario: data.costoUnitario || 0,
+        };
+      });
+
+      setOrdenAEditar({
+        id: orden.id,
+        proveedorId: orden.proveedorId || "",
+        fechaEntrega: orden.fechaEntrega,
+        items,
+      });
+      setIsEditDialogOpen(true);
+    } catch (error) {
+      console.error("Error al cargar orden para editar:", error);
+      alert("Error al cargar la orden para editar");
+    } finally {
+      setLoadingItems(false);
+    }
+  };
+
+  // Actualizar orden
+  const handleUpdateOrder = async (formData: OrderFormData) => {
+    if (!ordenAEditar) return;
+
+    try {
+      const batch = writeBatch(db);
+      const ordenRef = doc(db, "ordenesCompra", ordenAEditar.id);
+
+      // Crear resumen de productos
+      const productosResumen = `${formData.items.length} productos\n${formData.items[0].productoNombre} ${formData.items.length > 1 ? `+${formData.items.length - 1} más` : ""}`;
+
+      // Actualizar documento principal
+      const orderData = {
+        proveedorId: formData.proveedorId,
+        proveedorNombre: formData.proveedorNombre,
+        proveedorContacto: proveedores.find((p) => p.id === formData.proveedorId)?.contacto || "",
+        fechaEntrega: formData.fechaEntrega,
+        productosResumen,
+        cantidadProductos: formData.items.length,
+        total: formData.total,
+      };
+
+      batch.update(ordenRef, orderData);
+
+      // Eliminar todos los items existentes
+      const itemsSnapshot = await getDocs(
+        collection(db, "ordenesCompra", ordenAEditar.id, "items")
+      );
+      itemsSnapshot.docs.forEach((itemDoc) => {
+        batch.delete(doc(db, "ordenesCompra", ordenAEditar.id, "items", itemDoc.id));
+      });
+
+      // Agregar nuevos items
+      formData.items.forEach((item) => {
+        const itemRef = doc(collection(ordenRef, "items"));
+        batch.set(itemRef, {
+          productoId: item.productoId,
+          productoNombre: item.productoNombre,
+          productoCodigo: item.productoCodigo,
+          cantidad: item.cantidad,
+          costoUnitario: item.costoUnitario,
+          subtotal: item.cantidad * item.costoUnitario,
+          creadoEn: serverTimestamp(),
+        });
+      });
+
+      await batch.commit();
+
+      setIsEditDialogOpen(false);
+      setOrdenAEditar(null);
+      alert("Orden actualizada exitosamente");
+    } catch (error) {
+      console.error("Error al actualizar orden:", error);
+      alert("Error al actualizar la orden");
+    }
+  };
+
+  // Preparar eliminación
+  const handleDeleteOrder = (ordenId: string, numeroOrden: string) => {
+    setOrdenAEliminar({ id: ordenId, numero: numeroOrden });
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Confirmar eliminación
+  const handleConfirmDelete = async () => {
+    if (!ordenAEliminar) return;
+
+    try {
+      const batch = writeBatch(db);
+
+      // Obtener todos los items de la sub-colección
+      const itemsSnapshot = await getDocs(
+        collection(db, "ordenesCompra", ordenAEliminar.id, "items")
+      );
+
+      // Agregar delete de cada item al batch
+      itemsSnapshot.docs.forEach((itemDoc) => {
+        batch.delete(doc(db, "ordenesCompra", ordenAEliminar.id, "items", itemDoc.id));
+      });
+
+      // Agregar delete del documento principal
+      batch.delete(doc(db, "ordenesCompra", ordenAEliminar.id));
+
+      // Ejecutar batch
+      await batch.commit();
+
+      setIsDeleteDialogOpen(false);
+      setOrdenAEliminar(null);
+      alert("Orden eliminada exitosamente");
+    } catch (error) {
+      console.error("Error al eliminar orden:", error);
+      alert("Error al eliminar la orden");
     }
   };
 
@@ -192,7 +390,12 @@ export default function OrdenesCompraPage() {
       <PurchaseOrderFilters />
 
       {/* Table */}
-      <PurchaseOrderTable ordenes={ordenes} />
+      <PurchaseOrderTable
+        ordenes={ordenes}
+        onView={handleViewOrder}
+        onEdit={handleEditOrder}
+        onDelete={handleDeleteOrder}
+      />
 
       {/* Dialog para crear orden */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -208,6 +411,159 @@ export default function OrdenesCompraPage() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Dialog para ver orden */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalles de la Orden</DialogTitle>
+            <DialogDescription>
+              {ordenAVer?.numeroOrden} - {ordenAVer?.proveedor.nombre}
+            </DialogDescription>
+          </DialogHeader>
+
+          {ordenAVer && (
+            <div className="space-y-6">
+              {/* Información General */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Número de Orden</Label>
+                  <p className="text-base font-semibold">{ordenAVer.numeroOrden}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Fecha</Label>
+                  <p className="text-base">{ordenAVer.fecha}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Proveedor</Label>
+                  <p className="text-base">{ordenAVer.proveedor.nombre}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Fecha de Entrega</Label>
+                  <p className="text-base">{ordenAVer.fechaEntrega}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Estado</Label>
+                  <p className="text-base">{ordenAVer.estado}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Usuario</Label>
+                  <p className="text-base">{ordenAVer.usuario}</p>
+                </div>
+              </div>
+
+              {/* Items del Pedido */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Items del Pedido</h3>
+                {loadingItems ? (
+                  <div className="flex items-center justify-center p-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-muted-foreground">Cargando detalles...</span>
+                  </div>
+                ) : (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Producto</TableHead>
+                          <TableHead className="w-[120px]">Cantidad</TableHead>
+                          <TableHead className="w-[140px]">Costo Unit. (€)</TableHead>
+                          <TableHead className="text-right">Subtotal</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {itemsAVer.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                                <div>
+                                  <div className="font-medium">{item.productoNombre}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {item.productoCodigo}
+                                  </div>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{item.cantidad}</TableCell>
+                            <TableCell>€{item.costoUnitario.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-medium">
+                              €{(item.cantidad * item.costoUnitario).toFixed(2)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                {/* Total */}
+                {!loadingItems && (
+                  <div className="flex justify-end">
+                    <div className="w-full max-w-sm space-y-2 rounded-lg border p-4 bg-muted/30">
+                      <div className="flex justify-between">
+                        <span className="font-semibold">Total:</span>
+                        <span className="text-lg font-bold">
+                          €{ordenAVer.total.toLocaleString("es-ES", { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para editar orden */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Orden de Compra</DialogTitle>
+          </DialogHeader>
+          <PurchaseOrderForm
+            productos={productos}
+            proveedores={proveedores}
+            onSubmit={handleUpdateOrder}
+            onCancel={() => {
+              setIsEditDialogOpen(false);
+              setOrdenAEditar(null);
+            }}
+            initialData={ordenAEditar || undefined}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* AlertDialog para eliminar orden */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará permanentemente la orden{" "}
+              <strong>{ordenAEliminar?.numero}</strong> y todos sus items asociados.
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setOrdenAEliminar(null);
+              }}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
