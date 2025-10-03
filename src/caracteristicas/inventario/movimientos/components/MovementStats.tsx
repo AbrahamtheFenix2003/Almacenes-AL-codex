@@ -1,36 +1,38 @@
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, TrendingUp, TrendingDown, Scale } from "lucide-react";
 
-interface StatsData {
-  totalMovimientos: number;
-  entradas: {
-    cantidad: number;
-    valor: number;
-  };
-  salidas: {
-    cantidad: number;
-    valor: number;
-  };
-  balance: number;
+interface Movimiento {
+  id: string;
+  tipo: "Entrada" | "Salida";
+  total: number;
 }
 
 interface MovementStatsProps {
-  data?: StatsData;
+  movimientos: Movimiento[];
 }
 
-export function MovementStats({ data }: MovementStatsProps) {
-  const stats = data || {
-    totalMovimientos: 6,
-    entradas: {
-      cantidad: 3,
-      valor: 13439.86,
-    },
-    salidas: {
-      cantidad: 3,
-      valor: 829.81,
-    },
-    balance: 12609.95,
-  };
+export function MovementStats({ movimientos }: MovementStatsProps) {
+  const stats = useMemo(() => {
+    const entradas = movimientos.filter((m) => m.tipo === "Entrada");
+    const salidas = movimientos.filter((m) => m.tipo === "Salida");
+
+    const valorEntradas = entradas.reduce((sum, m) => sum + m.total, 0);
+    const valorSalidas = salidas.reduce((sum, m) => sum + m.total, 0);
+
+    return {
+      totalMovimientos: movimientos.length,
+      entradas: {
+        cantidad: entradas.length,
+        valor: valorEntradas,
+      },
+      salidas: {
+        cantidad: salidas.length,
+        valor: valorSalidas,
+      },
+      balance: valorEntradas - valorSalidas,
+    };
+  }, [movimientos]);
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

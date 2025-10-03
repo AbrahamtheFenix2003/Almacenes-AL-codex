@@ -3,12 +3,18 @@ import { Select } from "@/components/ui/select";
 import { Search } from "lucide-react";
 
 interface MovementFiltersProps {
-  onSearchChange?: (value: string) => void;
-  onTypeChange?: (value: string) => void;
-  onPeriodChange?: (value: string) => void;
+  searchTerm: string;
+  tipoMovimiento: string;
+  periodo: string;
+  onSearchChange: (value: string) => void;
+  onTypeChange: (value: string) => void;
+  onPeriodChange: (value: string) => void;
 }
 
 export function MovementFilters({
+  searchTerm,
+  tipoMovimiento,
+  periodo,
   onSearchChange,
   onTypeChange,
   onPeriodChange,
@@ -22,21 +28,24 @@ export function MovementFilters({
           <Input
             placeholder="Buscar producto, documento, usuario..."
             className="pl-9"
-            onChange={(e) => onSearchChange?.(e.target.value)}
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
 
         <Select
-          onChange={(e) => onTypeChange?.(e.target.value)}
+          value={tipoMovimiento}
+          onChange={(e) => onTypeChange(e.target.value)}
           aria-label="Filtrar por tipo"
         >
           <option value="all">Todos los tipos</option>
-          <option value="entrada">Entrada</option>
-          <option value="salida">Salida</option>
+          <option value="Entrada">Entrada</option>
+          <option value="Salida">Salida</option>
         </Select>
 
         <Select
-          onChange={(e) => onPeriodChange?.(e.target.value)}
+          value={periodo}
+          onChange={(e) => onPeriodChange(e.target.value)}
           aria-label="Filtrar por periodo"
         >
           <option value="all">Todos los periodos</option>

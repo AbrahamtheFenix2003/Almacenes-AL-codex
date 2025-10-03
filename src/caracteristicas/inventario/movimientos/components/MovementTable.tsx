@@ -28,6 +28,7 @@ export interface Movimiento {
 
 interface MovementTableProps {
   movimientos?: Movimiento[];
+  onView?: (movimiento: Movimiento) => void;
 }
 
 const mockMovimientos: Movimiento[] = [
@@ -123,7 +124,7 @@ const mockMovimientos: Movimiento[] = [
   },
 ];
 
-export function MovementTable({ movimientos = mockMovimientos }: MovementTableProps) {
+export function MovementTable({ movimientos = mockMovimientos, onView }: MovementTableProps) {
   return (
     <div className="rounded-lg border bg-card">
       <div className="p-4 border-b">
@@ -211,7 +212,11 @@ export function MovementTable({ movimientos = mockMovimientos }: MovementTablePr
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onView?.(mov)}
+                  >
                     <Eye className="h-4 w-4" />
                   </Button>
                 </TableCell>

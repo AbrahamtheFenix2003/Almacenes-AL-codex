@@ -8,6 +8,7 @@ import { ProductosPage } from "@/caracteristicas/catalogos/productos/pages/Produ
 import { ProveedoresPage } from "@/caracteristicas/catalogos/proveedores/pages/ProveedoresPage";
 import { ClientesPage } from "@/caracteristicas/catalogos/clientes/pages/ClientesPage";
 import { MovimientosPage } from "@/caracteristicas/inventario/movimientos/pages/MovimientosPage";
+import { AjustesPage } from "@/caracteristicas/inventario/ajustes/pages/AjustesPage";
 import { LoginPage } from "@/caracteristicas/autenticacion/pages/LoginPage";
 import { auth } from "./lib/firebase";
 
@@ -45,6 +46,7 @@ function PrivateRoute() {
         <Route path="/catalogos/proveedores" element={<ProveedoresPage />} />
         <Route path="/catalogos/clientes" element={<ClientesPage />} />
         <Route path="/inventario/movimientos" element={<MovimientosPage />} />
+        <Route path="/inventario/ajustes" element={<AjustesPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </PanelLayout>
