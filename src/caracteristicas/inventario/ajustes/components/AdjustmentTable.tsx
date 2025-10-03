@@ -24,6 +24,7 @@ export interface Ajuste {
   valor: number;
   estado: "Aprobado" | "Pendiente" | "Rechazado";
   usuario: string;
+  observaciones?: string;
 }
 
 interface AdjustmentTableProps {
