@@ -91,13 +91,13 @@ export function MovimientosPage() {
             tipo: data.tipo,
             concepto: data.concepto,
             producto: {
-              nombre: data.productoNombre || "",
-              codigo: data.productoCodigo || "",
+              nombre: data.producto?.nombre || data.productoNombre || "",
+              codigo: data.producto?.codigo || data.productoCodigo || "",
             },
             cantidad: data.cantidad,
             precioUnitario: data.precioUnitario,
             total: data.cantidad * data.precioUnitario,
-            documento: data.numeroDocumento || "",
+            documento: data.documento || data.numeroDocumento || "",
             usuario: data.usuario || "Sistema",
           } as Movimiento;
         });
