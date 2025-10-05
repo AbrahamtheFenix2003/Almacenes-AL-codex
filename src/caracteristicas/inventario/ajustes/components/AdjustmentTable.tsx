@@ -128,20 +128,20 @@ const mockAjustes: Ajuste[] = [
 export function AdjustmentTable({ ajustes = mockAjustes, onView }: AdjustmentTableProps) {
   const getTipoBadge = (tipo: Ajuste["tipo"]) => {
     const colors = {
-      "Conteo Físico": "border-blue-200 bg-blue-50 text-blue-700",
-      Merma: "border-red-200 bg-red-50 text-red-700",
-      Corrección: "border-yellow-200 bg-yellow-50 text-yellow-700",
-      Vencimiento: "border-orange-200 bg-orange-50 text-orange-700",
-      "Robo/Pérdida": "border-purple-200 bg-purple-50 text-purple-700",
+      "Conteo Físico": "border border-blue-200 bg-blue-50 text-blue-700",
+      Merma: "border border-red-200 bg-red-50 text-red-700",
+      Corrección: "border border-yellow-200 bg-yellow-50 text-yellow-700",
+      Vencimiento: "border border-orange-200 bg-orange-50 text-orange-700",
+      "Robo/Pérdida": "border border-purple-200 bg-purple-50 text-purple-700",
     };
     return colors[tipo];
   };
 
   const getEstadoBadge = (estado: Ajuste["estado"]) => {
     const colors = {
-      Aprobado: "border-green-200 bg-green-50 text-green-700",
-      Pendiente: "border-yellow-200 bg-yellow-50 text-yellow-700",
-      Rechazado: "border-red-200 bg-red-50 text-red-700",
+      Aprobado: "border border-green-200 bg-green-50 text-green-700",
+      Pendiente: "border border-yellow-200 bg-yellow-50 text-yellow-700",
+      Rechazado: "border border-red-200 bg-red-50 text-red-700",
     };
     return colors[estado];
   };
@@ -187,7 +187,7 @@ export function AdjustmentTable({ ajustes = mockAjustes, onView }: AdjustmentTab
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={getTipoBadge(ajuste.tipo)}>
+                  <Badge className={getTipoBadge(ajuste.tipo)}>
                     {ajuste.tipo}
                   </Badge>
                 </TableCell>
@@ -222,10 +222,10 @@ export function AdjustmentTable({ ajustes = mockAjustes, onView }: AdjustmentTab
                   </div>
                 </TableCell>
                 <TableCell className="text-right font-medium">
-                  €{ajuste.valor.toFixed(2)}
+                  �S/{ajuste.valor.toFixed(2)}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={getEstadoBadge(ajuste.estado)}>
+                  <Badge className={getEstadoBadge(ajuste.estado)}>
                     {ajuste.estado}
                   </Badge>
                 </TableCell>

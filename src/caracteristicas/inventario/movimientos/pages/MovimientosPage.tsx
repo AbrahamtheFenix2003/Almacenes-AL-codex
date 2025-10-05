@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Calendar, Package, FileText, User, Building } from "lucide-react";
+import { Plus, Calendar, Package, FileText, User } from "lucide-react";
 import { MovementStats } from "../components/MovementStats";
 import { MovementFilters } from "../components/MovementFilters";
 import { MovementTable, type Movimiento } from "../components/MovementTable";
@@ -16,6 +16,7 @@ import {
   getDocs,
   query,
   where,
+  orderBy,
 } from "firebase/firestore";
 
 interface Producto {
@@ -70,14 +71,20 @@ export function MovimientosPage() {
 
   // Listen to movimientos collection in real-time with tipo filter
   useEffect(() => {
-    let movimientosQuery = collection(db, "movimientos");
+    let movimientosQuery;
 
     // Apply tipo filter if selected
     if (tipoMovimiento !== "all") {
       movimientosQuery = query(
         collection(db, "movimientos"),
-        where("tipo", "==", tipoMovimiento)
-      ) as any;
+        where("tipo", "==", tipoMovimiento),
+        orderBy("fecha", "desc")
+      );
+    } else {
+      movimientosQuery = query(
+        collection(db, "movimientos"),
+        orderBy("fecha", "desc")
+      );
     }
 
     const unsubscribe = onSnapshot(
@@ -90,15 +97,17 @@ export function MovimientosPage() {
             fechaHora: data.fecha?.toDate().toLocaleString("es-ES") || "",
             tipo: data.tipo,
             concepto: data.concepto,
-            producto: {
+            producto: data.producto?.nombre || data.productoNombre ? {
               nombre: data.producto?.nombre || data.productoNombre || "",
               codigo: data.producto?.codigo || data.productoCodigo || "",
-            },
+            } : undefined,
             cantidad: data.cantidad,
             precioUnitario: data.precioUnitario,
-            total: data.cantidad * data.precioUnitario,
+            total: data.total,
             documento: data.documento || data.numeroDocumento || "",
             usuario: data.usuario || "Sistema",
+            clienteNombre: data.clienteNombre,
+            ventaId: data.ventaId,
           } as Movimiento;
         });
         setMovimientos(movimientosData);
@@ -121,8 +130,8 @@ export function MovimientosPage() {
     if (searchTerm) {
       filtered = filtered.filter(
         (m) =>
-          m.producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          m.documento.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          m.producto?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          m.documento?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           m.usuario.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -342,7 +351,7 @@ export function MovimientosPage() {
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Código</p>
+                      <p className="text-sm text-muted-foreground">Codigo</p>
                       <p className="text-base font-mono">
                         {movimientoAVer.producto.codigo}
                       </p>
@@ -360,13 +369,13 @@ export function MovimientosPage() {
                     <div className="space-y-2">
                       <p className="text-sm text-muted-foreground">Precio Unitario</p>
                       <p className="text-2xl font-bold">
-                        €{movimientoAVer.precioUnitario.toFixed(2)}
+                        �S/{movimientoAVer.precioUnitario.toFixed(2)}
                       </p>
                     </div>
                     <div className="space-y-2">
                       <p className="text-sm text-muted-foreground">Total</p>
                       <p className="text-2xl font-bold text-primary">
-                        €{movimientoAVer.total.toFixed(2)}
+                        �S/{movimientoAVer.total.toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -390,6 +399,15 @@ export function MovimientosPage() {
                       </div>
                       <p className="text-base font-medium">{movimientoAVer.usuario}</p>
                     </div>
+                    {movimientoAVer.clienteNombre && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <User className="h-4 w-4" />
+                          <span>Cliente</span>
+                        </div>
+                        <p className="text-base font-medium">{movimientoAVer.clienteNombre}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

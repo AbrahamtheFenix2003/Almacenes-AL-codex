@@ -8,22 +8,24 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowUp, ArrowDown, Eye, User, Calendar } from "lucide-react";
+import { ArrowUp, ArrowDown, Eye, Calendar } from "lucide-react";
 
 export interface Movimiento {
   id: string;
   fechaHora: string;
   tipo: "Entrada" | "Salida";
   concepto: string;
-  producto: {
+  producto?: {
     nombre: string;
     codigo: string;
   };
   cantidad: number;
-  precioUnitario: number;
-  total: number;
-  documento: string;
+  precioUnitario?: number;
+  total?: number;
+  documento?: string;
   usuario: string;
+  clienteNombre?: string;
+  ventaId?: string;
 }
 
 interface MovementTableProps {
@@ -137,28 +139,23 @@ export function MovementTable({ movimientos = mockMovimientos, onView }: Movemen
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
               <TableHead>Fecha/Hora</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Concepto</TableHead>
               <TableHead>Producto</TableHead>
               <TableHead className="text-right">Cantidad</TableHead>
-              <TableHead className="text-right">Precio Unit.</TableHead>
               <TableHead className="text-right">Total</TableHead>
-              <TableHead>Documento</TableHead>
-              <TableHead>Usuario</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead className="text-center">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {movimientos.map((mov) => (
               <TableRow key={mov.id}>
-                <TableCell className="font-medium">{mov.id}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2 text-sm">
                     <Calendar className="h-3 w-3 text-muted-foreground" />
                     <div>
-                      <div>{mov.fechaHora.split(" ")[0]}</div>
+                      <div className="font-medium">{mov.fechaHora.split(" ")[0]}</div>
                       <div className="text-xs text-muted-foreground">
                         {mov.fechaHora.split(" ")[1]}
                       </div>
@@ -168,16 +165,14 @@ export function MovementTable({ movimientos = mockMovimientos, onView }: Movemen
                 <TableCell>
                   {mov.tipo === "Entrada" ? (
                     <Badge
-                      variant="outline"
-                      className="gap-1 border-green-200 bg-green-50 text-green-700"
+                      className="gap-1 border border-green-200 bg-green-50 text-green-700"
                     >
                       <ArrowUp className="h-3 w-3" />
                       Entrada
                     </Badge>
                   ) : (
                     <Badge
-                      variant="outline"
-                      className="gap-1 border-red-200 bg-red-50 text-red-700"
+                      className="gap-1 border border-red-200 bg-red-50 text-red-700"
                     >
                       <ArrowDown className="h-3 w-3" />
                       Salida
@@ -185,33 +180,25 @@ export function MovementTable({ movimientos = mockMovimientos, onView }: Movemen
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{mov.concepto}</Badge>
+                  <Badge variant="muted">{mov.concepto}</Badge>
                 </TableCell>
                 <TableCell>
-                  <div className="max-w-[200px]">
-                    <div className="font-medium truncate">{mov.producto.nombre}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {mov.producto.codigo}
+                  {mov.producto ? (
+                    <div className="max-w-[250px]">
+                      <div className="font-medium truncate">{mov.producto.nombre}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {mov.producto.codigo}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
                 </TableCell>
-                <TableCell className="text-right">{mov.cantidad}</TableCell>
-                <TableCell className="text-right">
-                  €{mov.precioUnitario.toFixed(2)}
+                <TableCell className="text-right font-medium">{mov.cantidad}</TableCell>
+                <TableCell className="text-right font-bold">
+                  {mov.total !== undefined ? `€${mov.total.toFixed(2)}` : '-'}
                 </TableCell>
-                <TableCell className="text-right font-medium">
-                  €{mov.total.toFixed(2)}
-                </TableCell>
-                <TableCell className="font-mono text-sm">
-                  {mov.documento}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <User className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-sm">{mov.usuario}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-center">
                   <Button
                     variant="ghost"
                     size="icon"

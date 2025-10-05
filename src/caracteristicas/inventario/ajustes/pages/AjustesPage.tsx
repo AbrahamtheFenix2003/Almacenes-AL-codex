@@ -344,7 +344,7 @@ export function AjustesPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">€{stats.valorTotal.toFixed(2)}</div>
+            <div className="text-2xl font-bold">�S/{stats.valorTotal.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               Diferencia {stats.diferenciaTotal > 0 ? "+" : ""}{stats.diferenciaTotal} unidades
             </p>
@@ -445,14 +445,13 @@ export function AjustesPage() {
                     Tipo de Ajuste
                   </label>
                   <Badge
-                    variant="outline"
                     className={
                       ajusteAVer.tipo === "Conteo Físico"
-                        ? "border-blue-200 bg-blue-50 text-blue-700"
+                        ? "border border-blue-200 bg-blue-50 text-blue-700"
                         : ajusteAVer.tipo === "Merma"
-                        ? "border-red-200 bg-red-50 text-red-700"
+                        ? "border border-red-200 bg-red-50 text-red-700"
                         : ajusteAVer.tipo === "Corrección"
-                        ? "border-yellow-200 bg-yellow-50 text-yellow-700"
+                        ? "border border-yellow-200 bg-yellow-50 text-yellow-700"
                         : ajusteAVer.tipo === "Vencimiento"
                         ? "border-orange-200 bg-orange-50 text-orange-700"
                         : "border-purple-200 bg-purple-50 text-purple-700"
@@ -466,13 +465,12 @@ export function AjustesPage() {
                     Estado
                   </label>
                   <Badge
-                    variant="outline"
                     className={
                       ajusteAVer.estado === "Aprobado"
-                        ? "border-green-200 bg-green-50 text-green-700"
+                        ? "border border-green-200 bg-green-50 text-green-700"
                         : ajusteAVer.estado === "Pendiente"
-                        ? "border-yellow-200 bg-yellow-50 text-yellow-700"
-                        : "border-red-200 bg-red-50 text-red-700"
+                        ? "border border-yellow-200 bg-yellow-50 text-yellow-700"
+                        : "border border-red-200 bg-red-50 text-red-700"
                     }
                   >
                     {ajusteAVer.estado}
@@ -490,7 +488,7 @@ export function AjustesPage() {
                     {ajusteAVer.producto.nombre}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Código: {ajusteAVer.producto.codigo}
+                    Codigo: {ajusteAVer.producto.codigo}
                   </p>
                 </div>
               </div>
@@ -538,7 +536,7 @@ export function AjustesPage() {
                   <label className="text-sm font-medium text-muted-foreground">
                     Valor del Ajuste
                   </label>
-                  <p className="text-2xl font-bold">€{ajusteAVer.valor.toFixed(2)}</p>
+                  <p className="text-2xl font-bold">�S/{ajusteAVer.valor.toFixed(2)}</p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">

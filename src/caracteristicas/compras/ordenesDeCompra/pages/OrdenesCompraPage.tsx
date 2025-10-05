@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -48,6 +48,11 @@ import {
   serverTimestamp,
   updateDoc,
   deleteDoc,
+  query,
+  where,
+  runTransaction,
+  addDoc,
+  Timestamp,
 } from "firebase/firestore";
 
 export default function OrdenesCompraPage() {
@@ -56,6 +61,11 @@ export default function OrdenesCompraPage() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Estados para filtros
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedSupplier, setSelectedSupplier] = useState("");
 
   // Estados para Ver orden
   const [ordenAVer, setOrdenAVer] = useState<OrdenCompra | null>(null);
@@ -71,10 +81,26 @@ export default function OrdenesCompraPage() {
   const [ordenAEliminar, setOrdenAEliminar] = useState<{ id: string; numero: string } | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  // Leer órdenes de compra en tiempo real
+  // Leer órdenes de compra en tiempo real con filtros
   useEffect(() => {
+    let q = collection(db, "ordenesCompra");
+    const constraints = [];
+
+    // Aplicar filtro de estado
+    if (selectedStatus) {
+      constraints.push(where("estado", "==", selectedStatus));
+    }
+
+    // Aplicar filtro de proveedor
+    if (selectedSupplier) {
+      constraints.push(where("proveedorId", "==", selectedSupplier));
+    }
+
+    // Construir query con filtros
+    const ordenesQuery = constraints.length > 0 ? query(q, ...constraints) : q;
+
     const unsubscribe = onSnapshot(
-      collection(db, "ordenesCompra"),
+      ordenesQuery,
       (snapshot) => {
         const ordenesData: OrdenCompra[] = snapshot.docs.map((doc) => {
           const data = doc.data();
@@ -86,7 +112,7 @@ export default function OrdenesCompraPage() {
               nombre: data.proveedorNombre || "",
               codigo: data.proveedorContacto || "",
             },
-            proveedorId: data.proveedorId || "", // Añadimos este campo
+            proveedorId: data.proveedorId || "",
             productos: data.productosResumen || "",
             fechaEntrega: data.fechaEntrega || "",
             total: data.total || 0,
@@ -100,7 +126,7 @@ export default function OrdenesCompraPage() {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [selectedStatus, selectedSupplier]);
 
   // Leer productos (una vez)
   useEffect(() => {
@@ -139,6 +165,21 @@ export default function OrdenesCompraPage() {
 
     fetchProveedores();
   }, []);
+
+  // Filtrar órdenes localmente con searchTerm
+  const ordenesFiltradas = useMemo(() => {
+    if (!searchTerm) return ordenes;
+
+    const termLower = searchTerm.toLowerCase();
+    return ordenes.filter((orden) => {
+      return (
+        orden.numeroOrden.toLowerCase().includes(termLower) ||
+        orden.proveedor.nombre.toLowerCase().includes(termLower) ||
+        orden.usuario.toLowerCase().includes(termLower) ||
+        orden.productos.toLowerCase().includes(termLower)
+      );
+    });
+  }, [ordenes, searchTerm]);
 
   const handleCreateOrder = async (formData: OrderFormData) => {
     try {
@@ -359,6 +400,94 @@ export default function OrdenesCompraPage() {
     }
   };
 
+  // Actualizar estado de la orden (simple)
+  const handleUpdateStatus = async (ordenId: string, nuevoEstado: string) => {
+    try {
+      await updateDoc(doc(db, "ordenesCompra", ordenId), {
+        estado: nuevoEstado,
+      });
+      alert(`Orden actualizada a estado: ${nuevoEstado}`);
+    } catch (error) {
+      console.error("Error al actualizar estado:", error);
+      alert("Error al actualizar el estado de la orden");
+    }
+  };
+
+  // Recibir orden (transacción compleja)
+  const handleReceiveOrder = async (orden: OrdenCompra) => {
+    if (!confirm(`¿Confirmar recepción de la orden ${orden.numeroOrden}? Esto actualizará el inventario.`)) {
+      return;
+    }
+
+    try {
+      await runTransaction(db, async (transaction) => {
+        // 1. Leer items de la orden
+        const itemsSnapshot = await getDocs(
+          collection(db, "ordenesCompra", orden.id, "items")
+        );
+
+        const items = itemsSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        // 2. Por cada item, actualizar stock y crear movimiento
+        for (const item of items) {
+          // Leer producto actual
+          const productRef = doc(db, "productos", item.productoId);
+          const productSnap = await transaction.get(productRef);
+
+          if (!productSnap.exists()) {
+            throw new Error(`Producto ${item.productoNombre} no encontrado`);
+          }
+
+          const productData = productSnap.data();
+          const stockActual = productData.stock || 0;
+          const nuevoStock = stockActual + item.cantidad;
+
+          // Actualizar stock del producto
+          transaction.update(productRef, {
+            stock: nuevoStock,
+          });
+
+          // Crear movimiento de entrada
+          const movimientoRef = doc(collection(db, "movimientos"));
+          transaction.set(movimientoRef, {
+            tipo: "Entrada",
+            concepto: "Compra",
+            productoId: item.productoId,
+            productoNombre: item.productoNombre,
+            productoCodigo: item.productoCodigo,
+            cantidad: item.cantidad,
+            precioUnitario: item.costoUnitario || 0,
+            total: (item.cantidad * (item.costoUnitario || 0)),
+            stockAnterior: stockActual,
+            stockNuevo: nuevoStock,
+            motivo: `Recepción orden de compra ${orden.numeroOrden}`,
+            documento: orden.numeroOrden,
+            ordenCompraId: orden.id,
+            ordenCompraNumero: orden.numeroOrden,
+            usuario: auth.currentUser?.displayName || auth.currentUser?.email || "Usuario",
+            fecha: Timestamp.fromDate(new Date()),
+            creadoEn: serverTimestamp(),
+          });
+        }
+
+        // 3. Actualizar estado de la orden
+        const ordenRef = doc(db, "ordenesCompra", orden.id);
+        transaction.update(ordenRef, {
+          estado: "Recibido",
+        });
+      });
+
+      alert("Orden recibida exitosamente. Inventario actualizado.");
+      setIsViewDialogOpen(false);
+    } catch (error) {
+      console.error("Error al recibir orden:", error);
+      alert(`Error al recibir la orden: ${error instanceof Error ? error.message : "Error desconocido"}`);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -384,14 +513,22 @@ export default function OrdenesCompraPage() {
       </div>
 
       {/* Stats Cards */}
-      <PurchaseOrderStats ordenes={ordenes} />
+      <PurchaseOrderStats ordenes={ordenesFiltradas} />
 
       {/* Filters */}
-      <PurchaseOrderFilters />
+      <PurchaseOrderFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        selectedStatus={selectedStatus}
+        onStatusChange={setSelectedStatus}
+        selectedSupplier={selectedSupplier}
+        onSupplierChange={setSelectedSupplier}
+        proveedores={proveedores}
+      />
 
       {/* Table */}
       <PurchaseOrderTable
-        ordenes={ordenes}
+        ordenes={ordenesFiltradas}
         onView={handleViewOrder}
         onEdit={handleEditOrder}
         onDelete={handleDeleteOrder}
@@ -511,6 +648,42 @@ export default function OrdenesCompraPage() {
                   </div>
                 )}
               </div>
+
+              {/* Botones de acción según estado */}
+              {!loadingItems && (
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  {ordenAVer.estado === "Pendiente" && (
+                    <Button
+                      onClick={() => handleUpdateStatus(ordenAVer.id, "Aprobado")}
+                      variant="default"
+                    >
+                      Aprobar Orden
+                    </Button>
+                  )}
+                  {ordenAVer.estado === "Aprobado" && (
+                    <Button
+                      onClick={() => handleUpdateStatus(ordenAVer.id, "En Tránsito")}
+                      variant="default"
+                    >
+                      Marcar en Tránsito
+                    </Button>
+                  )}
+                  {ordenAVer.estado === "En Tránsito" && (
+                    <Button
+                      onClick={() => handleReceiveOrder(ordenAVer)}
+                      variant="default"
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Marcar como Recibido
+                    </Button>
+                  )}
+                  {ordenAVer.estado === "Recibido" && (
+                    <div className="text-sm text-green-600 font-medium">
+                      ✓ Orden completada
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

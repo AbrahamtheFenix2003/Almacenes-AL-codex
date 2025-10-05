@@ -82,7 +82,7 @@ const navItems: NavItem[] = [
     label: "Ventas",
     icon: Store,
     children: [
-      { label: "Punto de venta", icon: ShoppingCart, href: "/ventas/pdv" },
+      { label: "Punto de venta", icon: ShoppingCart, href: "/ventas/punto-de-venta" },
       { label: "Devolucion", icon: RotateCcw, href: "/ventas/devoluciones" },
       { label: "Clientes", icon: Users, href: "/ventas/clientes" },
     ],

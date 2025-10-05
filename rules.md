@@ -10,3 +10,5 @@ Uso Exclusivo de shadcn/ui y lucide-react: Todos los elementos de la interfaz de
 SDK Modular de Firebase v9+: Todas las interacciones con Firebase deben usar la sintaxis moderna e modular (ej. import { getFirestore } from 'firebase/firestore').
 
 Tipado Estricto con TypeScript: Define interfaces claras para las props de los componentes y para los objetos de datos (como la interfaz Producto).
+
+Debes hablarme siempre en español.
