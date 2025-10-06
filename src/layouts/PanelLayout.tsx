@@ -13,6 +13,7 @@ import {
   CreditCard,
   FileBarChart,
   FileText,
+  History,
   LayoutDashboard,
   ListChecks,
   LogOut,
@@ -92,6 +93,7 @@ const navItems: NavItem[] = [
     icon: Coins,
     children: [
       { label: "Caja diaria", icon: Wallet, href: "/caja/diaria" },
+      { label: "Historial de cajas", icon: History, href: "/caja/historial" },
       { label: "Pagos y cobros", icon: CreditCard, href: "/caja/pagos" },
     ],
   },
