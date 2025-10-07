@@ -27,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Package, Loader2 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import { PurchaseOrderStats } from "../components/PurchaseOrderStats";
 import { PurchaseOrderFilters } from "../components/PurchaseOrderFilters";
 import { PurchaseOrderTable, type OrdenCompra } from "../components/PurchaseOrderTable";
@@ -46,12 +47,9 @@ import {
   doc,
   writeBatch,
   serverTimestamp,
-  updateDoc,
-  deleteDoc,
   query,
   where,
   runTransaction,
-  addDoc,
   Timestamp,
 } from "firebase/firestore";
 
@@ -104,6 +102,9 @@ export default function OrdenesCompraPage() {
       (snapshot) => {
         const ordenesData: OrdenCompra[] = snapshot.docs.map((doc) => {
           const data = doc.data();
+          const rawEstado = typeof data.estado === "string" ? data.estado : "";
+          const estadoNormalizado = rawEstado === "Recibido" ? "Recibido" : "Pendiente";
+
           return {
             id: doc.id,
             numeroOrden: data.numeroOrden || "",
@@ -116,7 +117,7 @@ export default function OrdenesCompraPage() {
             productos: data.productosResumen || "",
             fechaEntrega: data.fechaEntrega || "",
             total: data.total || 0,
-            estado: data.estado || "Pendiente",
+            estado: estadoNormalizado,
             usuario: data.usuario || "",
           };
         });
@@ -401,18 +402,6 @@ export default function OrdenesCompraPage() {
   };
 
   // Actualizar estado de la orden (simple)
-  const handleUpdateStatus = async (ordenId: string, nuevoEstado: string) => {
-    try {
-      await updateDoc(doc(db, "ordenesCompra", ordenId), {
-        estado: nuevoEstado,
-      });
-      alert(`Orden actualizada a estado: ${nuevoEstado}`);
-    } catch (error) {
-      console.error("Error al actualizar estado:", error);
-      alert("Error al actualizar el estado de la orden");
-    }
-  };
-
   // Recibir orden (transacción compleja)
   const handleReceiveOrder = async (orden: OrdenCompra) => {
     if (!confirm(`¿Confirmar recepción de la orden ${orden.numeroOrden}? Esto actualizará el inventario.`)) {
@@ -420,28 +409,45 @@ export default function OrdenesCompraPage() {
     }
 
     try {
+      // 1. Primero leer los items FUERA de la transacción
+      const itemsSnapshot = await getDocs(
+        collection(db, "ordenesCompra", orden.id, "items")
+      );
+
+      const items = itemsSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          productoId: data.productoId as string,
+          productoNombre: data.productoNombre as string,
+          productoCodigo: data.productoCodigo as string,
+          cantidad: data.cantidad as number,
+          costoUnitario: data.costoUnitario as number,
+        };
+      });
+
+      // 2. Ejecutar la transacción con todas las lecturas primero
       await runTransaction(db, async (transaction) => {
-        // 1. Leer items de la orden
-        const itemsSnapshot = await getDocs(
-          collection(db, "ordenesCompra", orden.id, "items")
+        // FASE DE LECTURA: Leer todos los productos primero
+        const productReads = await Promise.all(
+          items.map(async (item) => {
+            const productRef = doc(db, "productos", item.productoId);
+            const productSnap = await transaction.get(productRef);
+
+            if (!productSnap.exists()) {
+              throw new Error(`Producto ${item.productoNombre} no encontrado`);
+            }
+
+            return {
+              ref: productRef,
+              data: productSnap.data(),
+              item: item,
+            };
+          })
         );
 
-        const items = itemsSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        // 2. Por cada item, actualizar stock y crear movimiento
-        for (const item of items) {
-          // Leer producto actual
-          const productRef = doc(db, "productos", item.productoId);
-          const productSnap = await transaction.get(productRef);
-
-          if (!productSnap.exists()) {
-            throw new Error(`Producto ${item.productoNombre} no encontrado`);
-          }
-
-          const productData = productSnap.data();
+        // FASE DE ESCRITURA: Ahora actualizar todo
+        for (const { ref: productRef, data: productData, item } of productReads) {
           const stockActual = productData.stock || 0;
           const nuevoStock = stockActual + item.cantidad;
 
@@ -604,7 +610,7 @@ export default function OrdenesCompraPage() {
                         <TableRow>
                           <TableHead>Producto</TableHead>
                           <TableHead className="w-[120px]">Cantidad</TableHead>
-                          <TableHead className="w-[140px]">Costo Unit. (€)</TableHead>
+                          <TableHead className="w-[140px]">Costo Unit. (S/.)</TableHead>
                           <TableHead className="text-right">Subtotal</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -623,9 +629,9 @@ export default function OrdenesCompraPage() {
                               </div>
                             </TableCell>
                             <TableCell>{item.cantidad}</TableCell>
-                            <TableCell>€{item.costoUnitario.toFixed(2)}</TableCell>
+                            <TableCell>{formatCurrency(item.costoUnitario)}</TableCell>
                             <TableCell className="text-right font-medium">
-                              €{(item.cantidad * item.costoUnitario).toFixed(2)}
+                              {formatCurrency(item.cantidad * item.costoUnitario)}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -641,7 +647,7 @@ export default function OrdenesCompraPage() {
                       <div className="flex justify-between">
                         <span className="font-semibold">Total:</span>
                         <span className="text-lg font-bold">
-                          €{ordenAVer.total.toLocaleString("es-ES", { minimumFractionDigits: 2 })}
+                          {formatCurrency(ordenAVer.total)}
                         </span>
                       </div>
                     </div>
@@ -652,34 +658,17 @@ export default function OrdenesCompraPage() {
               {/* Botones de acción según estado */}
               {!loadingItems && (
                 <div className="flex justify-end gap-2 pt-4 border-t">
-                  {ordenAVer.estado === "Pendiente" && (
-                    <Button
-                      onClick={() => handleUpdateStatus(ordenAVer.id, "Aprobado")}
-                      variant="default"
-                    >
-                      Aprobar Orden
-                    </Button>
-                  )}
-                  {ordenAVer.estado === "Aprobado" && (
-                    <Button
-                      onClick={() => handleUpdateStatus(ordenAVer.id, "En Tránsito")}
-                      variant="default"
-                    >
-                      Marcar en Tránsito
-                    </Button>
-                  )}
-                  {ordenAVer.estado === "En Tránsito" && (
+                  {ordenAVer.estado === "Pendiente" ? (
                     <Button
                       onClick={() => handleReceiveOrder(ordenAVer)}
                       variant="default"
                       className="bg-green-600 hover:bg-green-700"
                     >
-                      Marcar como Recibido
+                      Marcar como recibida
                     </Button>
-                  )}
-                  {ordenAVer.estado === "Recibido" && (
+                  ) : (
                     <div className="text-sm text-green-600 font-medium">
-                      ✓ Orden completada
+                      Orden recibida
                     </div>
                   )}
                 </div>

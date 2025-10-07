@@ -22,7 +22,7 @@ export interface SesionCaja {
 
 export interface Transaccion {
   id: string;
-  tipo: 'Venta' | 'Gasto' | 'Cobro' | 'Pago';
+  tipo: 'Venta' | 'Gasto' | 'Cobro' | 'Pago' | 'Ingreso Manual' | 'Egreso Manual';
   numero: string;
   descripcion: string;
   descripcionSecundaria?: string;
@@ -31,6 +31,7 @@ export interface Transaccion {
   usuario: string;
   fecha: Timestamp;
   sesionCajaId?: string;
+  motivo?: string;
 }
 
 export interface Venta extends Transaccion {
@@ -55,6 +56,17 @@ export interface Gasto extends Transaccion {
   categoria?: string;
   proveedor?: string;
   comprobante?: string;
+}
+
+export interface MovimientoManual {
+  id?: string;
+  tipo: 'Ingreso Manual' | 'Egreso Manual';
+  monto: number;
+  motivo: string;
+  metodo: 'Efectivo' | 'Tarjeta' | 'Transferencia';
+  usuario: string;
+  fecha: Timestamp;
+  sesionCajaId: string;
 }
 
 export interface ResumenCaja {

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ShoppingCart as CartIcon, Trash2 } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 import type { CartItem } from '../types';
 
 interface ShoppingCartProps {
@@ -81,9 +82,9 @@ function ShoppingCart({
                       </Button>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground">€{item.precio.toFixed(2)} c/u</p>
+                      <p className="text-xs text-muted-foreground">{`${formatCurrency(item.precio)} c/u`}</p>
                       <p className="text-base font-bold">
-                        €{(item.precio * item.cantidad).toFixed(2)}
+                        {formatCurrency(item.precio * item.cantidad)}
                       </p>
                     </div>
                   </div>
@@ -94,7 +95,7 @@ function ShoppingCart({
             <div className="border-t pt-4 mb-4">
               <div className="flex justify-between items-center text-lg font-bold">
                 <span>Total:</span>
-                <span>€{total.toFixed(2)}</span>
+                <span>{formatCurrency(total)}</span>
               </div>
             </div>
 

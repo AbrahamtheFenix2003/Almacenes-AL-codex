@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Eye, Pencil, Trash2, Building2, User, MapPin, Phone, Mail } from 'lucide-react';
+import { formatCurrency as formatPeruCurrency } from '@/lib/utils';
 import type { Timestamp } from 'firebase/firestore';
 import type { Cliente } from '../pages/ClientesPage';
 
@@ -36,14 +37,6 @@ const formatDate = (timestamp: FirestoreDate) => {
   }
 
   return 'N/A';
-};
-
-const formatCurrency = (amount: number | null | undefined) => {
-  const numericAmount = typeof amount === 'number' && Number.isFinite(amount) ? amount : 0;
-  return `CRC ${numericAmount.toLocaleString('es-CR', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })}`;
 };
 
 export function ClientTable({ clientes, loading, onEdit, onDelete, onView }: ClientTableProps) {
@@ -137,16 +130,16 @@ export function ClientTable({ clientes, loading, onEdit, onDelete, onView }: Cli
                 </TableCell>
                 <TableCell className="text-right">{cliente.comprasTotales}</TableCell>
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(cliente.montoTotalComprado)}
+                  {formatPeruCurrency(cliente.montoTotalComprado)}
                 </TableCell>
                 <TableCell>{formatDate(cliente.ultimaCompra)}</TableCell>
                 <TableCell className="text-right">
                   <div className="text-sm">
                     <p className="font-medium text-gray-900">
-                      {formatCurrency(cliente.creditoDisponible)}
+                      {formatPeruCurrency(cliente.creditoDisponible)}
                     </p>
                     <p className="text-xs text-gray-500">
-                      de {formatCurrency(cliente.limiteCredito)}
+                      de {formatPeruCurrency(cliente.limiteCredito)}
                     </p>
                   </div>
                 </TableCell>

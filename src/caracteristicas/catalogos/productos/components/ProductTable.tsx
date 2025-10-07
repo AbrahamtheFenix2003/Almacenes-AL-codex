@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatCurrency } from "@/lib/utils";
 import type { Producto } from "../pages/ProductosPage";
 
 interface ProductTableProps {
@@ -85,7 +86,9 @@ export function ProductTable({ productos, loading, error, onEdit, onDelete, onVi
                   <TableCell className="font-medium text-[color:var(--foreground)]/85">{producto.codigo}</TableCell>
                   <TableCell className="font-semibold text-[color:var(--foreground)]">{producto.nombre}</TableCell>
                   <TableCell className="text-[color:var(--foreground)]/70">{producto.categoria}</TableCell>
-                  <TableCell className="text-[color:var(--foreground)]">${producto.precio.toFixed(2)}</TableCell>
+                  <TableCell className="text-[color:var(--foreground)]">
+                    {formatCurrency(producto.precio)}
+                  </TableCell>
                   <TableCell className="text-[color:var(--foreground)]">
                     <span className="font-semibold text-[color:var(--foreground)]">{producto.stock}</span>
                     <span className="text-[color:var(--muted-foreground)]"> / {producto.stockMinimo}</span>

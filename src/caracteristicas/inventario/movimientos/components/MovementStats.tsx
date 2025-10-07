@@ -1,12 +1,8 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, TrendingUp, TrendingDown, Scale } from "lucide-react";
-
-interface Movimiento {
-  id: string;
-  tipo: "Entrada" | "Salida";
-  total: number;
-}
+import { formatCurrency } from "@/lib/utils";
+import type { Movimiento } from "../types";
 
 interface MovementStatsProps {
   movimientos: Movimiento[];
@@ -59,7 +55,7 @@ export function MovementStats({ movimientos }: MovementStatsProps) {
             {stats.entradas.cantidad}
           </div>
           <p className="text-xs text-muted-foreground">
-            Valor: €{stats.entradas.valor.toFixed(2)}
+            Valor: {formatCurrency(stats.entradas.valor)}
           </p>
         </CardContent>
       </Card>
@@ -74,7 +70,7 @@ export function MovementStats({ movimientos }: MovementStatsProps) {
             {stats.salidas.cantidad}
           </div>
           <p className="text-xs text-muted-foreground">
-            Valor: €{stats.salidas.valor.toFixed(2)}
+            Valor: {formatCurrency(stats.salidas.valor)}
           </p>
         </CardContent>
       </Card>
@@ -86,7 +82,7 @@ export function MovementStats({ movimientos }: MovementStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-green-600">
-            €{stats.balance.toFixed(2)}
+            {formatCurrency(stats.balance)}
           </div>
           <p className="text-xs text-muted-foreground">Diferencia neta</p>
         </CardContent>

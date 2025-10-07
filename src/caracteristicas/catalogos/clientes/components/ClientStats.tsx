@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Users, UserCheck, TrendingUp, ShoppingCart } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 import type { Cliente } from '../pages/ClientesPage';
 
 interface StatCardProps {
@@ -58,8 +59,11 @@ export function ClientStats({ clientes }: ClientStatsProps) {
       />
       <StatCard
         title="Ventas Totales"
-        value={`₡${montoTotal.toLocaleString('es-CR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
-        subtitle={`Promedio: ₡${promedioVentas.toLocaleString('es-CR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`}
+        value={formatCurrency(montoTotal, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+        subtitle={`Promedio: ${formatCurrency(promedioVentas, {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        })}`}
         icon={<TrendingUp className="w-6 h-6" />}
       />
       <StatCard

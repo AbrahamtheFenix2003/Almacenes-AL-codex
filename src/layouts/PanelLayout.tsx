@@ -1,16 +1,14 @@
-﻿import { useState, useMemo } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   AlertTriangle,
   Archive,
   Boxes,
-  Briefcase,
   ChevronRight,
   ClipboardCheck,
   ClipboardList,
   Coins,
-  CreditCard,
   FileBarChart,
   FileText,
   History,
@@ -18,9 +16,7 @@ import {
   ListChecks,
   LogOut,
   Package,
-  RotateCcw,
   Settings,
-  ShieldCheck,
   ShoppingCart,
   Store,
   Truck,
@@ -30,6 +26,8 @@ import {
   Warehouse,
   type LucideIcon,
 } from "lucide-react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export type PanelLayoutProps = {
   children: ReactNode;
@@ -84,8 +82,6 @@ const navItems: NavItem[] = [
     icon: Store,
     children: [
       { label: "Punto de venta", icon: ShoppingCart, href: "/ventas/punto-de-venta" },
-      { label: "Devolucion", icon: RotateCcw, href: "/ventas/devoluciones" },
-      { label: "Clientes", icon: Users, href: "/ventas/clientes" },
     ],
   },
   {
@@ -94,7 +90,6 @@ const navItems: NavItem[] = [
     children: [
       { label: "Caja diaria", icon: Wallet, href: "/caja/diaria" },
       { label: "Historial de cajas", icon: History, href: "/caja/historial" },
-      { label: "Pagos y cobros", icon: CreditCard, href: "/caja/pagos" },
     ],
   },
   {
@@ -105,11 +100,6 @@ const navItems: NavItem[] = [
       { label: "Compras", icon: FileText, href: "/reportes/compras" },
       { label: "Ventas", icon: FileBarChart, href: "/reportes/ventas" },
     ],
-  },
-  {
-    label: "Roles",
-    icon: Briefcase,
-    children: [{ label: "Permisos", icon: ShieldCheck, href: "/roles/permisos" }],
   },
   {
     label: "Configuracion",
@@ -127,6 +117,8 @@ const childInactive = "text-[color:var(--sidebar-foreground)]/60 hover:border-[c
 
 export default function PanelLayout({ children, onSignOut, userName, userEmail }: PanelLayoutProps) {
   const location = useLocation();
+  const [dashboardAlerts, setDashboardAlerts] = useState<number | null>(null);
+  const [dashboardAlertsLoading, setDashboardAlertsLoading] = useState(false);
 
   const initialOpen = useMemo(() => {
     const groups: Record<string, boolean> = {};
@@ -146,6 +138,77 @@ export default function PanelLayout({ children, onSignOut, userName, userEmail }
 
   const isItemActive = (item: NavItem) =>
     item.href ? location.pathname.startsWith(item.href) : item.children?.some((c) => location.pathname.startsWith(c.href));
+
+  const isDashboard = location.pathname.startsWith("/dashboard");
+  const activeNavInfo = useMemo(() => {
+    for (const item of navItems) {
+      if (item.href && location.pathname.startsWith(item.href)) {
+        return { parent: item.label };
+      }
+
+      if (item.children) {
+        for (const child of item.children) {
+          if (location.pathname.startsWith(child.href)) {
+            return { parent: item.label, child: child.label };
+          }
+        }
+      }
+    }
+
+    return null;
+  }, [location.pathname]);
+
+  const headerTitle = isDashboard
+    ? "Dashboard"
+    : activeNavInfo?.child ?? activeNavInfo?.parent ?? "Panel";
+  const headerSubtitle = isDashboard
+    ? "Resumen general del estado del sistema"
+    : activeNavInfo?.child
+      ? `Gestion de ${activeNavInfo.child.toLowerCase()}`
+      : activeNavInfo?.parent
+        ? `Resumen del modulo ${activeNavInfo.parent.toLowerCase()}`
+        : "Control del sistema";
+
+  useEffect(() => {
+    if (!isDashboard) {
+      setDashboardAlerts(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadAlerts = async () => {
+      try {
+        setDashboardAlertsLoading(true);
+        const snapshot = await getDocs(collection(db, "productos"));
+        if (cancelled) return;
+
+        const lowStock = snapshot.docs.reduce((count, doc) => {
+          const data = doc.data() as Record<string, unknown>;
+          const stock = Number(data.stock ?? 0);
+          const stockMinimo = Number(data.stockMinimo ?? 0);
+          return stock <= stockMinimo ? count + 1 : count;
+        }, 0);
+
+        setDashboardAlerts(lowStock);
+      } catch (error) {
+        console.error("Error al obtener alertas de stock:", error);
+        if (!cancelled) {
+          setDashboardAlerts(0);
+        }
+      } finally {
+        if (!cancelled) {
+          setDashboardAlertsLoading(false);
+        }
+      }
+    };
+
+    loadAlerts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isDashboard, location.pathname]);
 
   return (
     <div className="min-h-screen bg-[color:var(--background)] text-[color:var(--foreground)]">
@@ -244,19 +307,45 @@ export default function PanelLayout({ children, onSignOut, userName, userEmail }
           <div>
             <nav className="flex items-center gap-2 text-sm text-[color:var(--muted-foreground)]">
               <span>Inicio</span>
-              <span className="text-[color:var(--muted-foreground)]/40">&gt;</span>
-              <span className="text-[color:var(--primary)]">Dashboard</span>
+              {activeNavInfo?.parent && (
+                <>
+                  <span className="text-[color:var(--muted-foreground)]/40">&gt;</span>
+                  <span className="text-[color:var(--primary)]">{activeNavInfo.parent}</span>
+                </>
+              )}
+              {activeNavInfo?.child && (
+                <>
+                  <span className="text-[color:var(--muted-foreground)]/40">&gt;</span>
+                  <span className="text-[color:var(--primary)]">{activeNavInfo.child}</span>
+                </>
+              )}
+              {!activeNavInfo && (
+                <>
+                  <span className="text-[color:var(--muted-foreground)]/40">&gt;</span>
+                  <span className="text-[color:var(--primary)]">{headerTitle}</span>
+                </>
+              )}
             </nav>
             <div className="mt-2">
-              <h1 className="text-[28px] font-semibold text-[color:var(--foreground)]">Dashboard</h1>
-              <p className="text-sm text-[color:var(--muted-foreground)]">Resumen general del estado del almacen</p>
+              <h1 className="text-[28px] font-semibold text-[color:var(--foreground)]">{headerTitle}</h1>
+              <p className="text-sm text-[color:var(--muted-foreground)]">{headerSubtitle}</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--secondary)] px-5 py-2 text-sm text-[color:var(--muted-foreground)]">
-              <AlertTriangle className="h-4 w-4 text-[#d18f22]" />
-              <span>7 alertas criticas</span>
-            </div>
+            {isDashboard && (
+              <div className="flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--secondary)] px-5 py-2 text-sm text-[color:var(--muted-foreground)]">
+                <AlertTriangle
+                  className={`h-4 w-4 ${dashboardAlerts && dashboardAlerts > 0 ? "text-[#d18f22]" : "text-green-600"}`}
+                />
+                <span>
+                  {dashboardAlertsLoading
+                    ? "Cargando alertas..."
+                    : dashboardAlerts && dashboardAlerts > 0
+                      ? `${dashboardAlerts} alertas criticas`
+                      : "Sin alertas criticas"}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--secondary)] px-5 py-2 text-sm text-[color:var(--muted-foreground)]">
               <ClipboardList className="h-4 w-4 text-[color:var(--primary)]" />
               <span>Tareas pendientes</span>
@@ -268,3 +357,5 @@ export default function PanelLayout({ children, onSignOut, userName, userEmail }
     </div>
   );
 }
+
+

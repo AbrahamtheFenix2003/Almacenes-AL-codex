@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { formatCurrency } from "@/lib/utils";
 
 interface Producto {
   id: string;
@@ -170,7 +171,7 @@ export function MovementForm({ productos, onSubmit, onCancel }: MovementFormProp
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Precio Unitario (€)</label>
+            <label className="text-sm font-medium">Precio Unitario (S/.)</label>
             <Input
               type="number"
               min="0"
@@ -188,7 +189,7 @@ export function MovementForm({ productos, onSubmit, onCancel }: MovementFormProp
             <label className="text-sm font-medium">Total</label>
             <Input
               type="text"
-              value={`€${total.toFixed(2)}`}
+              value={formatCurrency(total)}
               readOnly
               className="bg-blue-50 font-semibold"
             />

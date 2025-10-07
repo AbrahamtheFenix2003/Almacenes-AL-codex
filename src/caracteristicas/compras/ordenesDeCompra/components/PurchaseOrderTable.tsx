@@ -6,9 +6,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, Pencil, Trash2, Calendar, User } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export interface OrdenCompra {
   id: string;
@@ -22,24 +23,18 @@ export interface OrdenCompra {
   productos: string;
   fechaEntrega: string;
   total: number;
-  estado: "Pendiente" | "Aprobado" | "Recibido" | "Cancelado" | "En Tránsito";
+  estado: "Pendiente" | "Recibido";
   usuario: string;
 }
 
 const estadoBadgeVariant = (
   estado: OrdenCompra["estado"]
-): "default" | "secondary" | "outline" | "destructive" => {
+): BadgeVariant => {
   switch (estado) {
     case "Pendiente":
-      return "secondary";
-    case "Aprobado":
-      return "default";
-    case "En Tránsito":
-      return "outline";
+      return "warning";
     case "Recibido":
-      return "default";
-    case "Cancelado":
-      return "destructive";
+      return "success";
     default:
       return "default";
   }
@@ -49,14 +44,8 @@ const estadoBadgeClass = (estado: OrdenCompra["estado"]): string => {
   switch (estado) {
     case "Pendiente":
       return "bg-amber-100 text-amber-800 hover:bg-amber-100";
-    case "Aprobado":
-      return "bg-blue-100 text-blue-800 hover:bg-blue-100";
-    case "En Tránsito":
-      return "bg-purple-100 text-purple-800 hover:bg-purple-100 border-purple-300";
     case "Recibido":
       return "bg-emerald-100 text-emerald-800 hover:bg-emerald-100";
-    case "Cancelado":
-      return "bg-red-100 text-red-800 hover:bg-red-100";
     default:
       return "";
   }
@@ -144,7 +133,7 @@ export function PurchaseOrderTable({ ordenes, onView, onEdit, onDelete }: Purcha
                 <TableCell>{orden.fechaEntrega}</TableCell>
                 <TableCell>
                   <div className="font-semibold">
-                    €{orden.total.toLocaleString("es-ES", { minimumFractionDigits: 2 })}
+                    {formatCurrency(orden.total)}
                   </div>
                 </TableCell>
                 <TableCell>

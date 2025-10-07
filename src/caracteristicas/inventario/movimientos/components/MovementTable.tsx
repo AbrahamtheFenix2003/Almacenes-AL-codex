@@ -9,24 +9,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown, Eye, Calendar } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+import type { Movimiento } from "../types";
 
-export interface Movimiento {
-  id: string;
-  fechaHora: string;
-  tipo: "Entrada" | "Salida";
-  concepto: string;
-  producto?: {
-    nombre: string;
-    codigo: string;
-  };
-  cantidad: number;
-  precioUnitario?: number;
-  total?: number;
-  documento?: string;
-  usuario: string;
-  clienteNombre?: string;
-  ventaId?: string;
-}
+export type { Movimiento };
 
 interface MovementTableProps {
   movimientos?: Movimiento[];
@@ -196,7 +182,7 @@ export function MovementTable({ movimientos = mockMovimientos, onView }: Movemen
                 </TableCell>
                 <TableCell className="text-right font-medium">{mov.cantidad}</TableCell>
                 <TableCell className="text-right font-bold">
-                  {mov.total !== undefined ? `€${mov.total.toFixed(2)}` : '-'}
+                  {mov.total !== undefined ? formatCurrency(mov.total) : '-'}
                 </TableCell>
                 <TableCell className="text-center">
                   <Button

@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 import type { Product } from '../types';
 
 interface ProductGridProps {
@@ -56,7 +56,7 @@ export default function ProductGrid({ productos, searchQuery, onAddToCart }: Pro
                     <span className="text-sm font-medium">{product.nombre}</span>
                   </td>
                   <td className="p-3 text-right">
-                    <span className="text-sm font-bold">€{product.precio.toFixed(2)}</span>
+                    <span className="text-sm font-bold">{formatCurrency(product.precio)}</span>
                   </td>
                   <td className="p-3 text-center">
                     <span

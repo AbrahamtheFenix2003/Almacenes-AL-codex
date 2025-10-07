@@ -10,6 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/lib/utils';
 import type { Transaccion } from '../types/index';
 import { Timestamp } from 'firebase/firestore';
 
@@ -104,7 +105,7 @@ export default function TransactionsTable({ transacciones }: TransactionsTablePr
                 </TableCell>
                 <TableCell className="text-right">
                   <span className={`font-semibold ${transaccion.tipo === 'Gasto' || transaccion.tipo === 'Pago' ? 'text-red-600' : 'text-green-600'}`}>
-                    {transaccion.tipo === 'Gasto' || transaccion.tipo === 'Pago' ? '-' : '+'}€{(transaccion.monto || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {`${transaccion.tipo === 'Gasto' || transaccion.tipo === 'Pago' ? '-' : '+'}${formatCurrency(Math.abs(transaccion.monto ?? 0))}`}
                   </span>
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">{transaccion.usuario}</TableCell>

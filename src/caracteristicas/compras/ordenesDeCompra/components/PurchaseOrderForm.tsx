@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Trash2, Package } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export interface Producto {
   id: string;
@@ -259,7 +260,7 @@ export function PurchaseOrderForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="costoUnitario">Costo Unitario (€)</Label>
+              <Label htmlFor="costoUnitario">Costo Unitario (S/.)</Label>
               <Input
                 id="costoUnitario"
                 type="number"
@@ -290,7 +291,7 @@ export function PurchaseOrderForm({
                 <TableRow>
                   <TableHead>Producto</TableHead>
                   <TableHead className="w-[120px]">Cantidad</TableHead>
-                  <TableHead className="w-[140px]">Costo Unit. (€)</TableHead>
+                  <TableHead className="w-[140px]">Costo Unit. (S/.)</TableHead>
                   <TableHead className="text-right">Subtotal</TableHead>
                   <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
@@ -337,7 +338,7 @@ export function PurchaseOrderForm({
                       />
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      €{(item.cantidad * item.costoUnitario).toFixed(2)}
+                      {formatCurrency(item.cantidad * item.costoUnitario)}
                     </TableCell>
                     <TableCell>
                       <Button
@@ -362,7 +363,7 @@ export function PurchaseOrderForm({
             <div className="w-full max-w-sm space-y-2 rounded-lg border p-4 bg-muted/30">
               <div className="flex justify-between">
                 <span className="font-semibold">Total:</span>
-                <span className="text-lg font-bold">€{total.toFixed(2)}</span>
+                <span className="text-lg font-bold">{formatCurrency(total)}</span>
               </div>
             </div>
           </div>

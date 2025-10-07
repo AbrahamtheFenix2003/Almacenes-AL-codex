@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { AlertCircle, CheckCircle } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 import type { SesionCaja } from '../types/index';
 
 interface CashBalanceCardProps {
@@ -27,10 +28,6 @@ export default function CashBalanceCard({ sesion }: CashBalanceCardProps) {
     if (!timestamp) return '-';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true });
-  };
-
-  const formatCurrency = (amount: number | undefined) => {
-    return `€${(amount || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const esCerrada = sesion.estado === 'Cerrada';

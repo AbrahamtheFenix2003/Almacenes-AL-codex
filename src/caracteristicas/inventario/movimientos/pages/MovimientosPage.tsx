@@ -4,8 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Plus, Calendar, Package, FileText, User } from "lucide-react";
 import { MovementStats } from "../components/MovementStats";
 import { MovementFilters } from "../components/MovementFilters";
-import { MovementTable, type Movimiento } from "../components/MovementTable";
+import { MovementTable } from "../components/MovementTable";
 import { MovementForm } from "../components/MovementForm";
+import type { Movimiento } from "../types";
 import { db, auth } from "@/lib/firebase";
 import {
   collection,
@@ -341,23 +342,25 @@ export function MovimientosPage() {
                   </div>
                 </div>
 
-                <div className="border-t pt-6">
-                  <h4 className="text-sm font-semibold mb-4">Producto</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Nombre</p>
-                      <p className="text-base font-medium">
-                        {movimientoAVer.producto.nombre}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Codigo</p>
-                      <p className="text-base font-mono">
-                        {movimientoAVer.producto.codigo}
-                      </p>
+                {movimientoAVer.producto && (
+                  <div className="border-t pt-6">
+                    <h4 className="text-sm font-semibold mb-4">Producto</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Nombre</p>
+                        <p className="text-base font-medium">
+                          {movimientoAVer.producto.nombre}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Codigo</p>
+                        <p className="text-base font-mono">
+                          {movimientoAVer.producto.codigo}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 <div className="border-t pt-6">
                   <h4 className="text-sm font-semibold mb-4">Cantidades y Precios</h4>
@@ -369,13 +372,13 @@ export function MovimientosPage() {
                     <div className="space-y-2">
                       <p className="text-sm text-muted-foreground">Precio Unitario</p>
                       <p className="text-2xl font-bold">
-                        �S/{movimientoAVer.precioUnitario.toFixed(2)}
+                        S/{movimientoAVer.precioUnitario?.toFixed(2) || '0.00'}
                       </p>
                     </div>
                     <div className="space-y-2">
                       <p className="text-sm text-muted-foreground">Total</p>
                       <p className="text-2xl font-bold text-primary">
-                        �S/{movimientoAVer.total.toFixed(2)}
+                        S/{movimientoAVer.total.toFixed(2)}
                       </p>
                     </div>
                   </div>

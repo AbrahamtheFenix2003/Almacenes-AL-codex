@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import ProductSearch from '../components/ProductSearch';
 import ProductGrid from '../components/ProductGrid';
 import ShoppingCart from '../components/ShoppingCart';
+import { formatCurrency } from '@/lib/utils';
 import type { Product, CartItem, Client, Sale, SaleItem, Movement } from '../types';
 
 export default function PuntoDeVentaPage() {
@@ -245,7 +246,7 @@ export default function PuntoDeVentaPage() {
             total: item.subtotal,
             documento: numeroVenta,
             ventaId: ventaRef.id,
-            clienteNombre: clienteSeleccionado.nombre,
+
             usuario: user.email || 'Usuario',
             observaciones: `Venta ${numeroVenta} - Cliente: ${clienteSeleccionado.nombre}`,
             creadoEn: serverTimestamp(),
@@ -352,7 +353,12 @@ export default function PuntoDeVentaPage() {
               <li>Se registrará la venta en el sistema</li>
               <li>Se reducirá el stock de los productos</li>
               <li>Se generarán movimientos de inventario</li>
-              <li>Total de la venta: <strong>€{cartItems.reduce((sum, item) => sum + item.precio * item.cantidad, 0).toFixed(2)}</strong></li>
+              <li>
+                Total de la venta:{' '}
+                <strong>
+                  {formatCurrency(cartItems.reduce((sum, item) => sum + item.precio * item.cantidad, 0))}
+                </strong>
+              </li>
             </ul>
           </div>
           <DialogFooter>

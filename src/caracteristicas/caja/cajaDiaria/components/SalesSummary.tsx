@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { TrendingUp, Banknote, CreditCard, ArrowLeftRight, TrendingDown, Plus } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 import type { ResumenCaja } from '../types/index';
 
 interface SalesSummaryProps {
@@ -66,7 +67,7 @@ export default function SalesSummary({ resumen }: SalesSummaryProps) {
             </div>
             <div className="text-xs text-gray-500 mb-1">{item.title}</div>
             <div className={`text-xl font-bold ${item.isNegative ? 'text-red-600' : 'text-gray-900'}`}>
-              {item.isNegative && '-'}€{item.amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {item.isNegative ? `-${formatCurrency(Math.abs(item.amount))}` : formatCurrency(item.amount)}
             </div>
           </Card>
         );

@@ -13,6 +13,9 @@ import OrdenesCompraPage from "@/caracteristicas/compras/ordenesDeCompra/pages/O
 import PuntoDeVentaPage from "@/caracteristicas/ventas/puntoDeVenta/pages/PuntoDeVentaPage";
 import CajaDiariaPage from "@/caracteristicas/caja/cajaDiaria/pages/CajaDiariaPage";
 import HistorialCajasPage from "@/caracteristicas/caja/cajaDiaria/pages/HistorialCajasPage";
+import { ReportesInventarioPage } from "@/caracteristicas/reportes/inventario/pages/ReportesInventarioPage";
+import { ReportesVentasPage } from "@/caracteristicas/reportes/ventas/pages/ReportesVentasPage";
+import { ReportesComprasPage } from "@/caracteristicas/reportes/compras/pages/ReportesComprasPage";
 import { LoginPage } from "@/caracteristicas/autenticacion/pages/LoginPage";
 import { auth } from "./lib/firebase";
 
@@ -55,6 +58,9 @@ function PrivateRoute() {
         <Route path="/ventas/punto-de-venta" element={<PuntoDeVentaPage />} />
         <Route path="/caja/diaria" element={<CajaDiariaPage />} />
         <Route path="/caja/historial" element={<HistorialCajasPage />} />
+        <Route path="/reportes/inventario" element={<ReportesInventarioPage />} />
+        <Route path="/reportes/ventas" element={<ReportesVentasPage />} />
+        <Route path="/reportes/compras" element={<ReportesComprasPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </PanelLayout>

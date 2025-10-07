@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { formatCurrency } from '@/lib/utils';
 import type { ResumenCaja } from '../types/index';
 
 interface CerrarCajaModalProps {
@@ -81,27 +82,31 @@ export default function CerrarCajaModal({
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-600">Apertura:</span>
-                <span className="font-semibold">€{montoInicial.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</span>
+                <span className="font-semibold">{formatCurrency(montoInicial)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Total Ventas:</span>
-                <span className="font-semibold text-green-600">+€{resumen.totalVentas.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</span>
+                <span className="font-semibold text-green-600">
+                  {`+${formatCurrency(Math.abs(resumen.totalVentas))}`}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Efectivo:</span>
-                <span className="font-semibold">€{resumen.totalEfectivo.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</span>
+                <span className="font-semibold">{formatCurrency(resumen.totalEfectivo)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Tarjetas:</span>
-                <span className="font-semibold">€{resumen.totalTarjetas.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</span>
+                <span className="font-semibold">{formatCurrency(resumen.totalTarjetas)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Transferencias:</span>
-                <span className="font-semibold">€{resumen.totalTransferencias.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</span>
+                <span className="font-semibold">{formatCurrency(resumen.totalTransferencias)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Gastos:</span>
-                <span className="font-semibold text-red-600">-€{resumen.totalGastos.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</span>
+                <span className="font-semibold text-red-600">
+                  {`-${formatCurrency(Math.abs(resumen.totalGastos))}`}
+                </span>
               </div>
             </div>
           </div>
@@ -110,7 +115,7 @@ export default function CerrarCajaModal({
             <Label htmlFor="totalCalculado">Total Calculado en Efectivo</Label>
             <Input
               id="totalCalculado"
-              value={`€${totalCalculado.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`}
+              value={formatCurrency(totalCalculado)}
               disabled
               className="font-semibold text-lg"
             />
@@ -137,7 +142,7 @@ export default function CerrarCajaModal({
               <div className="flex justify-between items-center">
                 <span className="font-semibold">Diferencia:</span>
                 <span className={`text-xl font-bold ${diferencia === 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {diferencia === 0 ? 'Sin diferencia' : `€${diferencia.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`}
+                  {diferencia === 0 ? 'Sin diferencia' : formatCurrency(diferencia)}
                 </span>
               </div>
               {diferencia !== 0 && (

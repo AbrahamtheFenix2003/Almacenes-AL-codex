@@ -10,6 +10,7 @@ import { ClientStats } from '../components/ClientStats';
 import { ClientFilters } from '../components/ClientFilters';
 import { ClientTable } from '../components/ClientTable';
 import { ClientForm } from '../components/ClientForm';
+import { formatCurrency } from '@/lib/utils';
 
 export interface Cliente {
   id: string;
@@ -51,7 +52,7 @@ const getDateFromFirestore = (value: FirestoreDate): Date | null => {
   return null;
 };
 
-const formatLocaleDate = (value: FirestoreDate, locale = 'es-CR') => {
+const formatLocaleDate = (value: FirestoreDate, locale = 'es-PE') => {
   const date = getDateFromFirestore(value);
   return date ? date.toLocaleDateString(locale) : 'N/A';
 };
@@ -310,10 +311,7 @@ export function ClientesPage() {
               <div className="space-y-1">
                 <Label className="text-sm font-medium text-gray-600">Monto Total Comprado</Label>
                 <p className="text-gray-900 font-semibold">
-                  CRC {clienteToView?.montoTotalComprado.toLocaleString('es-CR', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}
+                  {formatCurrency(clienteToView?.montoTotalComprado)}
                 </p>
               </div>
             </div>
@@ -322,19 +320,13 @@ export function ClientesPage() {
               <div className="space-y-1">
                 <Label className="text-sm font-medium text-gray-600">Limite de Credito</Label>
                 <p className="text-gray-900 font-semibold">
-                  CRC {clienteToView?.limiteCredito.toLocaleString('es-CR', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}
+                  {formatCurrency(clienteToView?.limiteCredito)}
                 </p>
               </div>
               <div className="space-y-1">
                 <Label className="text-sm font-medium text-gray-600">Credito Disponible</Label>
                 <p className="text-gray-900 font-semibold">
-                  CRC {clienteToView?.creditoDisponible.toLocaleString('es-CR', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}
+                  {formatCurrency(clienteToView?.creditoDisponible)}
                 </p>
               </div>
             </div>

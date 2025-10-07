@@ -20,6 +20,7 @@ import { ProductStats } from "../components/ProductStats";
 import { ProductFilters } from "../components/ProductFilters";
 import { ProductTable } from "../components/ProductTable";
 import { ProductForm, type ProductFormData } from "../components/ProductForm";
+import { formatCurrency } from "@/lib/utils";
 
 // Interface para definir la estructura de un producto
 export interface Producto {
@@ -38,6 +39,7 @@ export interface Producto {
 
 export function ProductosPage() {
   const [productos, setProductos] = useState<Producto[]>([]);
+  const [proveedores, setProveedores] = useState<Array<{ id: string; nombre: string }>>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -109,6 +111,36 @@ export function ProductosPage() {
     // Cleanup: desuscribirse cuando el componente se desmonte
     return () => unsubscribe();
   }, [selectedCategory]);
+
+  useEffect(() => {
+    const proveedoresRef = collection(db, 'proveedores');
+    const unsubscribe = onSnapshot(
+      proveedoresRef,
+      (snapshot) => {
+        const proveedoresData = snapshot.docs
+          .map((doc) => {
+            const data = doc.data() as Record<string, unknown>;
+            const nombre =
+              (data.empresa as string | undefined)?.trim() ||
+              (data.contactoNombre as string | undefined)?.trim() ||
+              "";
+
+            return {
+              id: doc.id,
+              nombre: nombre.length > 0 ? nombre : "Proveedor sin nombre",
+            };
+          })
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
+
+        setProveedores(proveedoresData);
+      },
+      (snapshotError) => {
+        console.error("Error al cargar proveedores:", snapshotError);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   const handleCreateProduct = async (formData: ProductFormData): Promise<boolean> => {
     try {
@@ -259,6 +291,7 @@ export function ProductosPage() {
           <ProductForm
             onSubmit={productoAEditar ? handleUpdateProduct : handleCreateProduct}
             onCancel={() => setIsModalOpen(false)}
+            proveedores={proveedores}
             initialData={productoAEditar ? {
               nombre: productoAEditar.nombre,
               codigo: productoAEditar.codigo,
@@ -351,7 +384,7 @@ export function ProductosPage() {
                   Precio
                 </Label>
                 <p className="text-[color:var(--foreground)] font-semibold">
-                  ${productoAVer?.precio.toFixed(2)}
+                  {formatCurrency(productoAVer?.precio)}
                 </p>
               </div>
               <div className="space-y-1">

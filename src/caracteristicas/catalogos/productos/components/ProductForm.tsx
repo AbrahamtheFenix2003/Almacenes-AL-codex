@@ -21,6 +21,7 @@ interface ProductFormProps {
   onSubmit: (data: ProductFormData) => Promise<boolean> | boolean;
   onCancel: () => void;
   initialData?: Partial<ProductFormData>;
+  proveedores: Array<{ id: string; nombre: string }>;
 }
 
 const createInitialFormState = (): ProductFormData => ({
@@ -35,7 +36,7 @@ const createInitialFormState = (): ProductFormData => ({
   descripcion: "",
 });
 
-export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProps) {
+export function ProductForm({ onSubmit, onCancel, initialData, proveedores }: ProductFormProps) {
   const [formData, setFormData] = React.useState<ProductFormData>(createInitialFormState());
 
   React.useEffect(() => {
@@ -46,6 +47,26 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
       }));
     }
   }, [initialData]);
+
+  const providerOptions = React.useMemo(() => {
+    const names = Array.from(
+      new Set(
+        proveedores
+          .map((proveedor) => proveedor.nombre?.toString().trim())
+          .filter((nombre): nombre is string => Boolean(nombre && nombre.length))
+      )
+    ).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+
+    if (
+      formData.proveedor &&
+      formData.proveedor.trim().length > 0 &&
+      !names.includes(formData.proveedor)
+    ) {
+      names.unshift(formData.proveedor);
+    }
+
+    return names;
+  }, [proveedores, formData.proveedor]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,12 +151,16 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
             value={formData.proveedor}
             onChange={handleChange}
           >
-            <option value="">Seleccione un proveedor</option>
-            <option value="Dell Inc.">Dell Inc.</option>
-            <option value="Logitech">Logitech</option>
-            <option value="Samsung">Samsung</option>
-            <option value="Corsair">Corsair</option>
-            <option value="Apple">Apple</option>
+            <option value="">
+              {providerOptions.length > 0
+                ? "Seleccione un proveedor"
+                : "No hay proveedores registrados"}
+            </option>
+            {providerOptions.map((nombre) => (
+              <option key={nombre} value={nombre}>
+                {nombre}
+              </option>
+            ))}
           </Select>
         </div>
       </div>

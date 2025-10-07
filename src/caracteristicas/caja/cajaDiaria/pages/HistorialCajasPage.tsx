@@ -3,6 +3,7 @@ import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/lib/utils';
 import {
   Table,
   TableBody,
@@ -48,16 +49,6 @@ export default function HistorialCajasPage() {
     cargarHistorial();
   }, []);
 
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return '-';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  };
-
   const formatTime = (timestamp: any) => {
     if (!timestamp) return '-';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -66,10 +57,6 @@ export default function HistorialCajasPage() {
       minute: '2-digit',
       hour12: true
     });
-  };
-
-  const formatCurrency = (amount: number | undefined) => {
-    return `€${(amount || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const handleVerDetalle = (sesion: SesionCaja) => {

@@ -48,10 +48,7 @@ export function PurchaseOrderFilters({
         >
           <option value="">Todos los estados</option>
           <option value="Pendiente">Pendiente</option>
-          <option value="Aprobado">Aprobado</option>
-          <option value="En Tránsito">En Tránsito</option>
           <option value="Recibido">Recibido</option>
-          <option value="Cancelado">Cancelado</option>
         </select>
 
         {/* Proveedor Filter */}

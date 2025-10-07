@@ -12,6 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { formatCurrency } from '@/lib/utils';
 import type { SesionCaja, Transaccion } from '../types/index';
 
 interface DetalleCajaModalProps {
@@ -72,8 +73,32 @@ export default function DetalleCajaModal({ isOpen, onClose, sesion }: DetalleCaj
           } as Transaccion;
         });
 
+        // Cargar movimientos manuales de esta sesión
+        const movimientosQuery = query(
+          collection(db, 'movimientosManuales'),
+          where('sesionCajaId', '==', sesion.id),
+          orderBy('fecha', 'desc')
+        );
+
+        const movimientosSnapshot = await getDocs(movimientosQuery);
+        const movimientos = movimientosSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            tipo: data.tipo as 'Ingreso Manual' | 'Egreso Manual',
+            numero: data.numero || '',
+            descripcion: data.descripcion || '',
+            descripcionSecundaria: data.motivo,
+            metodo: data.metodo as 'Efectivo' | 'Tarjeta' | 'Transferencia',
+            monto: Number(data.monto) || 0,
+            usuario: data.usuario || '',
+            fecha: data.fecha,
+            motivo: data.motivo
+          } as Transaccion;
+        });
+
         // Combinar y ordenar
-        const todasTransacciones = [...ventas, ...gastos].sort(
+        const todasTransacciones = [...ventas, ...gastos, ...movimientos].sort(
           (a, b) => b.fecha.toMillis() - a.fecha.toMillis()
         );
 
@@ -98,10 +123,6 @@ export default function DetalleCajaModal({ isOpen, onClose, sesion }: DetalleCaj
     });
   };
 
-  const formatCurrency = (amount: number | undefined) => {
-    return `€${(amount || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
-
   const getTipoBadgeColor = (tipo: Transaccion['tipo']) => {
     switch (tipo) {
       case 'Venta':
@@ -112,6 +133,10 @@ export default function DetalleCajaModal({ isOpen, onClose, sesion }: DetalleCaj
         return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
       case 'Pago':
         return 'bg-red-100 text-red-800 hover:bg-red-100';
+      case 'Ingreso Manual':
+        return 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100';
+      case 'Egreso Manual':
+        return 'bg-amber-100 text-amber-800 hover:bg-amber-100';
       default:
         return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
     }
@@ -167,8 +192,13 @@ export default function DetalleCajaModal({ isOpen, onClose, sesion }: DetalleCaj
               {formatCurrency(sesion.totalCalculado)}
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              Ventas: {formatCurrency(sesion.totalVentas)}
+              Ventas: {formatCurrency(sesion.totalVentas || 0)}
             </div>
+            {(sesion.totalIngresosExtra || 0) > 0 && (
+              <div className="text-xs text-gray-500">
+                + Ingresos: {formatCurrency(sesion.totalIngresosExtra || 0)}
+              </div>
+            )}
           </Card>
 
           <Card className="p-4">
@@ -185,7 +215,7 @@ export default function DetalleCajaModal({ isOpen, onClose, sesion }: DetalleCaj
         </div>
 
         {/* Resumen por método de pago */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <Card className="p-3">
             <div className="text-xs text-gray-500 mb-1">Efectivo</div>
             <div className="text-lg font-semibold text-green-600">
@@ -202,6 +232,12 @@ export default function DetalleCajaModal({ isOpen, onClose, sesion }: DetalleCaj
             <div className="text-xs text-gray-500 mb-1">Transferencias</div>
             <div className="text-lg font-semibold text-indigo-600">
               {formatCurrency(sesion.totalTransferencias)}
+            </div>
+          </Card>
+          <Card className="p-3">
+            <div className="text-xs text-gray-500 mb-1">Ingresos Extra</div>
+            <div className="text-lg font-semibold text-emerald-600">
+              {formatCurrency(sesion.totalIngresosExtra || 0)}
             </div>
           </Card>
           <Card className="p-3">
@@ -255,7 +291,7 @@ export default function DetalleCajaModal({ isOpen, onClose, sesion }: DetalleCaj
                           <span className="text-sm">{transaccion.descripcion}</span>
                           {transaccion.descripcionSecundaria && (
                             <span className="text-xs text-gray-500">
-                              {transaccion.descripcionSecundaria}
+                              {transaccion.motivo ? `Motivo: ${transaccion.motivo}` : transaccion.descripcionSecundaria}
                             </span>
                           )}
                         </div>
@@ -268,11 +304,11 @@ export default function DetalleCajaModal({ isOpen, onClose, sesion }: DetalleCaj
                       </TableCell>
                       <TableCell className="text-right">
                         <span className={`font-semibold ${
-                          transaccion.tipo === 'Gasto' || transaccion.tipo === 'Pago'
+                          transaccion.tipo === 'Gasto' || transaccion.tipo === 'Pago' || transaccion.tipo === 'Egreso Manual'
                             ? 'text-red-600'
                             : 'text-green-600'
                         }`}>
-                          {transaccion.tipo === 'Gasto' || transaccion.tipo === 'Pago' ? '-' : '+'}
+                          {transaccion.tipo === 'Gasto' || transaccion.tipo === 'Pago' || transaccion.tipo === 'Egreso Manual' ? '-' : '+'}
                           {formatCurrency(transaccion.monto)}
                         </span>
                       </TableCell>

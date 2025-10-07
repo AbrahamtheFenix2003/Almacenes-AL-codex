@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Clock, Loader2, DollarSign } from "lucide-react";
+import { FileText, Clock, CheckCircle, DollarSign } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import type { OrdenCompra } from "./PurchaseOrderTable";
 
 interface PurchaseOrderStatsProps {
@@ -11,9 +12,7 @@ export function PurchaseOrderStats({ ordenes }: PurchaseOrderStatsProps) {
   const stats = useMemo(() => {
     const totalOrdenes = ordenes.length;
     const pendientes = ordenes.filter((o) => o.estado === "Pendiente").length;
-    const enProceso = ordenes.filter(
-      (o) => o.estado === "Aprobado" || o.estado === "En Tránsito"
-    ).length;
+    const recibidas = ordenes.filter((o) => o.estado === "Recibido").length;
     const valorTotal = ordenes.reduce((acc, orden) => acc + orden.total, 0);
 
     return [
@@ -27,23 +26,23 @@ export function PurchaseOrderStats({ ordenes }: PurchaseOrderStatsProps) {
       {
         label: "Pendientes",
         value: pendientes.toString(),
-        helper: "Requieren aprobación",
+        helper: "En espera de recepción",
         icon: Clock,
         accentClass: "text-[#b8860b]",
       },
       {
-        label: "En Proceso",
-        value: enProceso.toString(),
-        helper: "Aprobadas/En tránsito",
-        icon: Loader2,
-        accentClass: "text-[#0ea5e9]",
+        label: "Recibidas",
+        value: recibidas.toString(),
+        helper: "Órdenes completadas",
+        icon: CheckCircle,
+        accentClass: "text-[#1f8f4d]",
       },
       {
         label: "Valor Total",
-        value: `€${valorTotal.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-        helper: "Órdenes activas",
+        value: formatCurrency(valorTotal),
+        helper: "Monto acumulado",
         icon: DollarSign,
-        accentClass: "text-[#1f8f4d]",
+        accentClass: "text-[#0ea5e9]",
       },
     ];
   }, [ordenes]);
