@@ -81,6 +81,14 @@ export function ReportesVentasPage() {
     return '';
   };
 
+  const resolverNumeroOrden = (numero: string): number => {
+    if (!numero) return 0;
+    const matches = numero.match(/\d+/g);
+    if (!matches) return 0;
+    // Unir todos los grupos numéricos para evitar resultados inconsistentes (ej: VNT-001-2025)
+    return parseInt(matches.join(''), 10) || 0;
+  };
+
   const cargarVentas = useCallback(async () => {
     try {
       setLoading(true);
@@ -124,6 +132,7 @@ export function ReportesVentasPage() {
           margen: margenEstimado
         });
       });
+      data.sort((a, b) => resolverNumeroOrden(b.numero) - resolverNumeroOrden(a.numero));
       setVentas(data);
     } catch (e) {
       console.error('Error cargando ventas', e);

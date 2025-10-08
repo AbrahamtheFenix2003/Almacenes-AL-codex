@@ -1,4 +1,5 @@
 import { Eye, Pencil, Trash2, Star, Phone, Mail, MapPin } from "lucide-react";
+import type { Timestamp } from "firebase/firestore";
 import {
   Table,
   TableBody,
@@ -29,6 +30,7 @@ export interface Proveedor {
   ultimaCompra: string;
   calificacion: number;
   estado: "Activo" | "Inactivo";
+  fechaCreacion?: Timestamp | Date | string | null;
 }
 
 interface SupplierTableProps {

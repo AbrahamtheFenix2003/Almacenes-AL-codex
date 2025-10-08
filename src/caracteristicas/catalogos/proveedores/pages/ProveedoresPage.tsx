@@ -62,8 +62,23 @@ export const ProveedoresPage = () => {
             ultimaCompra: data.ultimaCompra || '',
             calificacion: data.calificacion || 0,
             estado: data.estado || 'Activo',
+            fechaCreacion: data.fechaCreacion || null,
           };
         });
+
+        const resolveFechaCreacion = (fecha: Proveedor['fechaCreacion']): number => {
+          if (!fecha) return 0;
+          if (fecha instanceof Timestamp) return fecha.toMillis();
+          if (fecha instanceof Date) return fecha.getTime();
+          if (typeof fecha === 'string') {
+            const parsed = Date.parse(fecha);
+            return Number.isNaN(parsed) ? 0 : parsed;
+          }
+          return 0;
+        };
+
+        proveedoresData.sort((a, b) => resolveFechaCreacion(b.fechaCreacion) - resolveFechaCreacion(a.fechaCreacion));
+
         setProveedores(proveedoresData);
         setLoading(false);
         setError(null);

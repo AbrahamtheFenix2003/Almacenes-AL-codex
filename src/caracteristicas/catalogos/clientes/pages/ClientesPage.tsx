@@ -57,6 +57,16 @@ const formatLocaleDate = (value: FirestoreDate, locale = 'es-PE') => {
   return date ? date.toLocaleDateString(locale) : 'N/A';
 };
 
+const getOrderTimestamp = (cliente: Pick<Cliente, 'fechaCreacion' | 'ultimaCompra'>): number => {
+  const createdAt = getDateFromFirestore(cliente.fechaCreacion);
+  if (createdAt) {
+    return createdAt.getTime();
+  }
+
+  const lastPurchase = getDateFromFirestore(cliente.ultimaCompra);
+  return lastPurchase ? lastPurchase.getTime() : 0;
+};
+
 export function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +86,9 @@ export function ClientesPage() {
           id: item.id,
           ...item.data(),
         })) as Cliente[];
+
+        clientesData.sort((a, b) => getOrderTimestamp(b) - getOrderTimestamp(a));
+
         setClientes(clientesData);
         setLoading(false);
       },

@@ -35,6 +35,7 @@ export interface Producto {
   estado: 'Activo' | 'Stock Bajo' | 'Agotado';
   ubicacion?: string;
   descripcion?: string;
+  fechaCreacion?: Timestamp | Date | string | null;
 }
 
 export function ProductosPage() {
@@ -95,8 +96,23 @@ export function ProductosPage() {
             estado,
             ubicacion: data.ubicacion || '',
             descripcion: data.descripcion || '',
+            fechaCreacion: data.fechaCreacion || null,
           };
         });
+
+        const resolveFechaCreacion = (fecha: Producto['fechaCreacion']): number => {
+          if (!fecha) return 0;
+          if (fecha instanceof Timestamp) return fecha.toMillis();
+          if (fecha instanceof Date) return fecha.getTime();
+          if (typeof fecha === 'string') {
+            const parsed = Date.parse(fecha);
+            return Number.isNaN(parsed) ? 0 : parsed;
+          }
+          return 0;
+        };
+
+        productosData.sort((a, b) => resolveFechaCreacion(b.fechaCreacion) - resolveFechaCreacion(a.fechaCreacion));
+
         setProductos(productosData);
         setLoading(false);
         setError(null);

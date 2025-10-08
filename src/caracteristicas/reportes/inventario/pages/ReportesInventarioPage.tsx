@@ -77,6 +77,22 @@ export function ReportesInventarioPage() {
           ...doc.data()
         } as Producto);
       });
+
+      const resolveFechaCreacion = (fecha: Producto['fechaCreacion']): number => {
+        if (!fecha) return 0;
+        if (fecha instanceof Date) return fecha.getTime();
+        if (typeof fecha === 'string') {
+          const parsed = Date.parse(fecha);
+          return Number.isNaN(parsed) ? 0 : parsed;
+        }
+        if (typeof fecha === 'number') return fecha;
+        if (fecha && typeof fecha === 'object' && 'toDate' in fecha && typeof fecha.toDate === 'function') {
+          return fecha.toDate().getTime();
+        }
+        return 0;
+      };
+
+      productosData.sort((a, b) => resolveFechaCreacion(b.fechaCreacion) - resolveFechaCreacion(a.fechaCreacion));
       
       setProductos(productosData);
     } catch (error) {
