@@ -44,6 +44,7 @@ export interface Sale {
   items: SaleItem[];
   subtotal: number;
   total: number;
+  metodoPago: string;
   usuario: string;
   creadoEn: Timestamp;
 }

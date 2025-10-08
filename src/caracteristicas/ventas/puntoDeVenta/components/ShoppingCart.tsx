@@ -7,6 +7,8 @@ import type { CartItem } from '../types';
 
 interface ShoppingCartProps {
   items: CartItem[];
+  metodoPago: string;
+  onMetodoPagoChange: (value: string) => void;
   onUpdateQuantity: (id: string, cantidad: number) => void;
   onRemoveItem: (id: string) => void;
   onClearCart: () => void;
@@ -16,6 +18,8 @@ interface ShoppingCartProps {
 
 function ShoppingCart({
   items,
+  metodoPago,
+  onMetodoPagoChange,
   onUpdateQuantity,
   onRemoveItem,
   onClearCart,
@@ -92,7 +96,21 @@ function ShoppingCart({
               ))}
             </div>
 
-            <div className="border-t pt-4 mb-4">
+            <div className="border-t pt-4 mb-4 space-y-4">
+              <div className="flex justify-between items-center">
+                <label htmlFor="metodo-pago" className="text-sm font-medium">Método de Pago</label>
+                <select
+                  id="metodo-pago"
+                  value={metodoPago}
+                  onChange={(e) => onMetodoPagoChange(e.target.value)}
+                  className="w-1/2 p-2 border rounded-md bg-background"
+                  disabled={processing}
+                >
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Yape">Yape</option>
+                  <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+                </select>
+              </div>
               <div className="flex justify-between items-center text-lg font-bold">
                 <span>Total:</span>
                 <span>{formatCurrency(total)}</span>

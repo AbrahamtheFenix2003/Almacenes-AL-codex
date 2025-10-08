@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, doc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, runTransaction, serverTimestamp, DocumentReference, FieldValue } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ export default function PuntoDeVentaPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedClient, setSelectedClient] = useState('general');
+  const [metodoPago, setMetodoPago] = useState('Efectivo');
   const [productos, setProductos] = useState<Product[]>([]);
   const [clientes, setClientes] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -170,7 +171,7 @@ export default function PuntoDeVentaPage() {
       // Ejecutar transacción
       await runTransaction(db, async (transaction) => {
         // 1. Validar stock y leer productos
-        const productUpdates: Array<{ ref: any; newStock: number }> = [];
+        const productUpdates: Array<{ ref: DocumentReference; newStock: number }> = [];
 
         for (const item of cartItems) {
           const productRef = doc(db, 'productos', item.id);
@@ -210,7 +211,7 @@ export default function PuntoDeVentaPage() {
         const subtotal = saleItems.reduce((sum, item) => sum + item.subtotal, 0);
         const total = subtotal;
 
-        const saleData: Omit<Sale, 'fecha' | 'creadoEn'> & { fecha: any; creadoEn: any } = {
+        const saleData: Omit<Sale, 'fecha' | 'creadoEn'> & { fecha: FieldValue; creadoEn: FieldValue } = {
           numeroVenta,
           fecha: serverTimestamp(),
           clienteId: clienteSeleccionado.id,
@@ -218,6 +219,7 @@ export default function PuntoDeVentaPage() {
           items: saleItems,
           subtotal,
           total,
+          metodoPago,
           usuario: user.email || 'Usuario',
           creadoEn: serverTimestamp(),
         };
@@ -228,8 +230,8 @@ export default function PuntoDeVentaPage() {
         // 4. Crear movimientos de inventario (uno por cada producto)
         for (const item of saleItems) {
           const movementData: Omit<Movement, 'fecha' | 'creadoEn'> & {
-            fecha: any;
-            creadoEn: any;
+            fecha: FieldValue;
+            creadoEn: FieldValue;
             productoCodigo: string;
             precioUnitario: number;
             total: number;
@@ -330,6 +332,8 @@ export default function PuntoDeVentaPage() {
 
           <ShoppingCart
             items={cartItems}
+            metodoPago={metodoPago}
+            onMetodoPagoChange={setMetodoPago}
             onUpdateQuantity={handleUpdateQuantity}
             onRemoveItem={handleRemoveItem}
             onClearCart={handleClearCart}
