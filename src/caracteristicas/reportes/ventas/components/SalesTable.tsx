@@ -15,7 +15,7 @@ export interface VentaReporte {
   productos: number;
   items: SaleItem[];
   total: number;
-  metodoPago: 'Efectivo' | 'Tarjeta' | 'Transferencia' | 'SINPE' | 'Yape' | 'Transferencia Bancaria';
+  metodoPago: 'Efectivo' | 'Yape' | 'Transferencia Bancaria';
   vendedor: string;
   margen: number;
 }

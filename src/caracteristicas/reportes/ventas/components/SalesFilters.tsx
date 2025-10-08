@@ -7,7 +7,7 @@ import { Search, Calendar, X } from 'lucide-react';
 export interface FiltrosVentas {
   searchTerm: string;
   tipo: 'todos' | 'individual' | 'empresa';
-  metodo: 'todos' | 'efectivo' | 'tarjeta' | 'transferencia' | 'sinpe';
+  metodo: 'todos' | 'efectivo' | 'yape' | 'transferencia-bancaria';
   dateRange: { start: string; end: string };
 }
 
@@ -60,9 +60,8 @@ export function SalesFilters({ filtros, onFiltrosChange }: Props) {
           <Select value={filtros.metodo} onChange={e => handleChange('metodo', e.target.value as FiltrosVentas['metodo'])}>
             <option value="todos">Todos los métodos</option>
             <option value="efectivo">Efectivo</option>
-            <option value="tarjeta">Tarjeta</option>
-            <option value="transferencia">Transferencia</option>
-            <option value="sinpe">SINPE</option>
+            <option value="yape">Yape</option>
+            <option value="transferencia-bancaria">Transferencia Bancaria</option>
           </Select>
           <Input type="date" value={filtros.dateRange.start} onChange={e => handleChange('dateRange', { ...filtros.dateRange, start: e.target.value })} />
           <Input type="date" value={filtros.dateRange.end} onChange={e => handleChange('dateRange', { ...filtros.dateRange, end: e.target.value })} />

@@ -31,9 +31,8 @@ export function SaleDetailModal({ venta, isOpen, onClose }: Props) {
   const getMetodoPagoColor = (metodo: string) => {
     const colors = {
       'Efectivo': 'bg-green-50 text-green-700 border-green-200',
-      'Tarjeta': 'bg-blue-50 text-blue-700 border-blue-200',
-      'Transferencia': 'bg-purple-50 text-purple-700 border-purple-200',
-      'SINPE': 'bg-orange-50 text-orange-700 border-orange-200'
+      'Yape': 'bg-purple-50 text-purple-700 border-purple-200',
+      'Transferencia Bancaria': 'bg-blue-50 text-blue-700 border-blue-200'
     };
     return colors[metodo as keyof typeof colors] || 'bg-gray-50 text-gray-700 border-gray-200';
   };

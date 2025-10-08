@@ -39,13 +39,13 @@ interface VentaFirestore {
   creadoEn?: Timestamp;
   // Campos opcionales que pueden no existir en todos los documentos
   tipo?: 'Individual' | 'Empresa';
-  metodoPago?: 'Efectivo' | 'Tarjeta' | 'Transferencia' | 'SINPE';
+  metodoPago?: string;
 }
 
 interface FiltrosVentas {
   searchTerm: string;
   tipo: 'todos' | 'individual' | 'empresa';
-  metodo: 'todos' | 'efectivo' | 'tarjeta' | 'transferencia' | 'sinpe';
+  metodo: 'todos' | 'efectivo' | 'yape' | 'transferencia-bancaria';
   dateRange: { start: string; end: string };
 }
 
@@ -53,10 +53,9 @@ interface DatosDia { fecha: string; ventas: number; total: number; }
 interface DatosMetodo { [key: string]: string | number | undefined; metodo: string; valor: number; color?: string; }
 
 const metodoColors: Record<string,string> = {
-  Transferencia: '#38bdf8',
-  Tarjeta: '#a78bfa',
-  Efectivo: '#f87171',
-  SINPE: '#34d399'
+  'Transferencia Bancaria': '#38bdf8',
+  Yape: '#a78bfa',
+  Efectivo: '#f87171'
 };
 
 export function ReportesVentasPage() {
@@ -105,13 +104,25 @@ export function ReportesVentasPage() {
     return date.toISOString().split('T')[0];
   };
 
-  const resolverNumeroOrden = (numero: string): number => {
-    if (!numero) return 0;
-    const matches = numero.match(/\d+/g);
-    if (!matches) return 0;
-    // Unir todos los grupos numéricos para evitar resultados inconsistentes (ej: VNT-001-2025)
-    return parseInt(matches.join(''), 10) || 0;
-  };
+const resolverNumeroOrden = (numero: string): number => {
+  if (!numero) return 0;
+  const matches = numero.match(/\d+/g);
+  if (!matches) return 0;
+  // Unir todos los grupos numéricos para evitar resultados inconsistentes (ej: VNT-001-2025)
+  return parseInt(matches.join(''), 10) || 0;
+};
+
+const normalizarMetodoPago = (metodo?: string): VentaReporte['metodoPago'] => {
+  if (!metodo) return 'Efectivo';
+  const normalized = metodo.toLowerCase();
+  if (normalized.includes('yape')) {
+    return 'Yape';
+  }
+  if (normalized.includes('transfer')) {
+    return 'Transferencia Bancaria';
+  }
+  return 'Efectivo';
+};
 
   const cargarVentas = useCallback(async () => {
     try {
@@ -155,7 +166,7 @@ export function ReportesVentasPage() {
           productos: cantidadProductos,
           items: d.items ?? [],
           total: d.total ?? 0,
-          metodoPago: (d.metodoPago ?? 'Efectivo') as VentaReporte['metodoPago'],
+          metodoPago: normalizarMetodoPago(d.metodoPago),
           vendedor: d.usuario ?? 'Sistema',
           margen: margenEstimado
         });
@@ -184,15 +195,14 @@ export function ReportesVentasPage() {
         if (filtros.tipo === 'empresa' && v.tipo !== 'Empresa') return false;
       }
       // filtro por método
-      if (filtros.metodo !== 'todos') {
-        const mapMetodo: Record<string,string> = {
-          efectivo: 'Efectivo',
-          tarjeta: 'Tarjeta',
-          transferencia: 'Transferencia',
-          sinpe: 'SINPE'
-        };
-        if (v.metodoPago !== mapMetodo[filtros.metodo]) return false;
-      }
+    if (filtros.metodo !== 'todos') {
+      const mapMetodo: Record<string,string> = {
+        efectivo: 'Efectivo',
+        yape: 'Yape',
+        'transferencia-bancaria': 'Transferencia Bancaria'
+      };
+      if (v.metodoPago !== mapMetodo[filtros.metodo]) return false;
+    }
       // filtro búsqueda
       if (filtros.searchTerm) {
         const t = filtros.searchTerm.toLowerCase();
