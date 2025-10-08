@@ -105,8 +105,13 @@ export function ClientesPage() {
     data: Omit<Cliente, 'id' | 'comprasTotales' | 'montoTotalComprado' | 'ultimaCompra' | 'creditoDisponible' | 'fechaCreacion' | 'estado'>,
   ) => {
     try {
+      // Filtrar valores undefined antes de enviar a Firestore
+      const filteredData = Object.fromEntries(
+        Object.entries(data).filter(([, value]) => value !== undefined)
+      );
+
       await addDoc(collection(db, 'clientes'), {
-        ...data,
+        ...filteredData,
         estado: 'Activo',
         comprasTotales: 0,
         montoTotalComprado: 0,
@@ -129,9 +134,14 @@ export function ClientesPage() {
     }
 
     try {
+      // Filtrar valores undefined antes de enviar a Firestore
+      const filteredData = Object.fromEntries(
+        Object.entries(data).filter(([, value]) => value !== undefined)
+      );
+
       const clienteRef = doc(db, 'clientes', selectedCliente.id);
       await updateDoc(clienteRef, {
-        ...data,
+        ...filteredData,
         creditoDisponible: data.limiteCredito - (selectedCliente.limiteCredito - selectedCliente.creditoDisponible),
       });
       setIsFormOpen(false);

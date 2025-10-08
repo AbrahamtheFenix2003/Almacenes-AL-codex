@@ -94,8 +94,19 @@ export function ReportesVentasPage() {
         // Calcular cantidad total de productos
         const cantidadProductos = d.items?.reduce((sum, item) => sum + item.cantidad, 0) || 0;
         
-        // Inferir tipo de cliente (si clienteId es 'general', es Individual)
-        const tipoCliente = d.clienteId === 'general' ? 'Individual' : (d.tipo ?? 'Empresa');
+        // Determinar tipo de cliente correctamente
+        let tipoCliente: 'Individual' | 'Empresa';
+        if (d.tipo) {
+          // Si existe el campo tipo en la venta, usarlo directamente
+          tipoCliente = d.tipo;
+        } else if (d.clienteId === 'general') {
+          // Cliente general es siempre Individual
+          tipoCliente = 'Individual';
+        } else {
+          // Para ventas antiguas sin campo tipo, asumir Individual por defecto
+          // (esto es más conservador que asumir Empresa)
+          tipoCliente = 'Individual';
+        }
         
         // Estimar margen promedio (25% por defecto si no existe)
         const margenEstimado = 25;

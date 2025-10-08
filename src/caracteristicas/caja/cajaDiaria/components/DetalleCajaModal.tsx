@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
+import { Timestamp } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -113,9 +114,9 @@ export default function DetalleCajaModal({ isOpen, onClose, sesion }: DetalleCaj
     cargarTransacciones();
   }, [isOpen, sesion]);
 
-  const formatTime = (timestamp: any) => {
+  const formatTime = (timestamp: Timestamp | null | undefined) => {
     if (!timestamp) return '-';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = timestamp.toDate();
     return date.toLocaleTimeString('es-ES', {
       hour: '2-digit',
       minute: '2-digit',
@@ -146,9 +147,9 @@ export default function DetalleCajaModal({ isOpen, onClose, sesion }: DetalleCaj
     switch (metodo) {
       case 'Efectivo':
         return '💵';
-      case 'Tarjeta':
-        return '💳';
-      case 'Transferencia':
+      case 'Yape':
+        return '�';
+      case 'Transferencia Bancaria':
         return '🏦';
       default:
         return '';
@@ -223,9 +224,9 @@ export default function DetalleCajaModal({ isOpen, onClose, sesion }: DetalleCaj
             </div>
           </Card>
           <Card className="p-3">
-            <div className="text-xs text-gray-500 mb-1">Tarjetas</div>
+            <div className="text-xs text-gray-500 mb-1">Yape</div>
             <div className="text-lg font-semibold text-purple-600">
-              {formatCurrency(sesion.totalTarjetas)}
+              {formatCurrency(sesion.totalYape)}
             </div>
           </Card>
           <Card className="p-3">

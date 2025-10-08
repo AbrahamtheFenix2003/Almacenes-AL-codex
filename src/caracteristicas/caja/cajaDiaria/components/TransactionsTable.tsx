@@ -44,9 +44,9 @@ export default function TransactionsTable({ transacciones }: TransactionsTablePr
     switch (metodo) {
       case 'Efectivo':
         return '💵';
-      case 'Tarjeta':
-        return '💳';
-      case 'Transferencia':
+      case 'Yape':
+        return '�';
+      case 'Transferencia Bancaria':
         return '🏦';
       default:
         return '';

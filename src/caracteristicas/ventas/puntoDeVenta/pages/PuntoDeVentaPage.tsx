@@ -184,19 +184,33 @@ export default function PuntoDeVentaPage() {
 
       // Ejecutar transacción
       await runTransaction(db, async (transaction) => {
-        // 1. Validar stock y leer productos
-        const productUpdates: Array<{ ref: DocumentReference; newStock: number }> = [];
-
-        for (const item of cartItems) {
+        // 1. LECTURAS: Realizar todas las lecturas de documentos al principio.
+        const productPromises = cartItems.map(item => {
           const productRef = doc(db, 'productos', item.id);
-          const productDoc = await transaction.get(productRef);
+          return transaction.get(productRef);
+        });
+        const productDocs = await Promise.all(productPromises);
+
+        let clienteDoc = null;
+        const clienteRef = clienteSeleccionado.id !== 'general'
+          ? doc(db, 'clientes', clienteSeleccionado.id)
+          : null;
+
+        if (clienteRef) {
+          clienteDoc = await transaction.get(clienteRef);
+        }
+
+        // 2. VALIDACIONES: Validar stock y existencia de documentos.
+        const productUpdates: Array<{ ref: DocumentReference; newStock: number }> = [];
+        for (let i = 0; i < cartItems.length; i++) {
+          const item = cartItems[i];
+          const productDoc = productDocs[i];
 
           if (!productDoc.exists()) {
             throw new Error(`Producto ${item.nombre} no encontrado`);
           }
 
           const productData = productDoc.data() as Product;
-
           if (productData.stock < item.cantidad) {
             throw new Error(
               `Stock insuficiente para ${item.nombre}. Disponible: ${productData.stock}, Solicitado: ${item.cantidad}`
@@ -204,15 +218,17 @@ export default function PuntoDeVentaPage() {
           }
 
           const newStock = productData.stock - item.cantidad;
-          productUpdates.push({ ref: productRef, newStock });
+          productUpdates.push({ ref: productDoc.ref, newStock });
         }
 
-        // 2. Actualizar stock de productos
+        // 3. ESCRITURAS: Realizar todas las escrituras después de las lecturas y validaciones.
+        
+        // 3.1. Actualizar stock de productos
         for (const update of productUpdates) {
           transaction.update(update.ref, { stock: update.newStock });
         }
 
-        // 3. Crear documento de venta
+        // 3.2. Crear documento de venta
         const saleItems: SaleItem[] = cartItems.map((item) => {
           const subtotal = item.subtotalModificado ?? item.precio * item.cantidad;
           const precioUnitario = subtotal / item.cantidad;
@@ -242,6 +258,7 @@ export default function PuntoDeVentaPage() {
           fecha: serverTimestamp(),
           clienteId: clienteSeleccionado.id,
           clienteNombre: clienteSeleccionado.nombre,
+          tipo: clienteSeleccionado.id === 'general' ? 'Individual' : (clienteSeleccionado.tipo || 'Individual'),
           items: saleItems,
           subtotal,
           total,
@@ -253,7 +270,28 @@ export default function PuntoDeVentaPage() {
         const ventaRef = doc(collection(db, 'ventas'));
         transaction.set(ventaRef, saleData);
 
-        // 4. Crear movimientos de inventario (uno por cada producto)
+        // 3.3. Actualizar estadísticas del cliente
+        if (clienteRef && clienteDoc && clienteDoc.exists()) {
+          const clienteData = clienteDoc.data();
+          const comprasTotalesActuales = clienteData.comprasTotales || 0;
+          const montoTotalCompradoActual = clienteData.montoTotalComprado || 0;
+
+          const updateData: { [key: string]: number | FieldValue } = {
+            comprasTotales: comprasTotalesActuales + 1,
+            montoTotalComprado: montoTotalCompradoActual + total,
+            ultimaCompra: serverTimestamp(),
+          };
+
+          // Si el cliente tiene un límite de crédito, se reduce el disponible con cada compra.
+          if (clienteData.limiteCredito && clienteData.limiteCredito > 0) {
+            const creditoDisponibleActual = clienteData.creditoDisponible || 0;
+            updateData.creditoDisponible = creditoDisponibleActual - total;
+          }
+
+          transaction.update(clienteRef, updateData);
+        }
+
+        // 3.4. Crear movimientos de inventario
         for (const item of saleItems) {
           const movementData: Omit<Movement, 'fecha' | 'creadoEn'> & {
             fecha: FieldValue;

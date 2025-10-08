@@ -20,7 +20,7 @@ interface AgregarIngresoModalProps {
   onConfirm: (datos: {
     monto: number;
     motivo: string;
-    metodo: 'Efectivo' | 'Tarjeta' | 'Transferencia';
+    metodo: 'Efectivo' | 'Yape' | 'Transferencia Bancaria';
   }) => Promise<void>;
   userName: string;
 }
@@ -33,7 +33,7 @@ export default function AgregarIngresoModal({
 }: AgregarIngresoModalProps) {
   const [monto, setMonto] = useState('');
   const [motivo, setMotivo] = useState('');
-  const [metodo, setMetodo] = useState<'Efectivo' | 'Tarjeta' | 'Transferencia'>('Efectivo');
+  const [metodo, setMetodo] = useState<'Efectivo' | 'Yape' | 'Transferencia Bancaria'>('Efectivo');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,12 +113,12 @@ export default function AgregarIngresoModal({
             <Label htmlFor="metodo">Método de Pago</Label>
             <Select 
               value={metodo} 
-              onChange={(e) => setMetodo(e.target.value as 'Efectivo' | 'Tarjeta' | 'Transferencia')}
+              onChange={(e) => setMetodo(e.target.value as 'Efectivo' | 'Yape' | 'Transferencia Bancaria')}
               disabled={loading}
             >
               <option value="Efectivo">Efectivo</option>
-              <option value="Tarjeta">Tarjeta</option>
-              <option value="Transferencia">Transferencia</option>
+              <option value="Yape">Yape</option>
+              <option value="Transferencia Bancaria">Transferencia Bancaria</option>
             </Select>
           </div>
 

@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/card';
-import { TrendingUp, Banknote, CreditCard, ArrowLeftRight, TrendingDown, Plus } from 'lucide-react';
+import { TrendingUp, Banknote, Smartphone, ArrowLeftRight, TrendingDown, Plus } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import type { ResumenCaja } from '../types/index';
 
@@ -24,9 +24,9 @@ export default function SalesSummary({ resumen }: SalesSummaryProps) {
       bgColor: 'bg-green-50'
     },
     {
-      title: 'Tarjetas',
-      amount: resumen.totalTarjetas,
-      icon: CreditCard,
+      title: 'Yape',
+      amount: resumen.totalYape,
+      icon: Smartphone,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50'
     },

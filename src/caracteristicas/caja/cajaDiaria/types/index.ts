@@ -14,7 +14,7 @@ export interface SesionCaja {
   usuarioCierre?: string;
   totalVentas?: number;
   totalEfectivo?: number;
-  totalTarjetas?: number;
+  totalYape?: number;
   totalTransferencias?: number;
   totalGastos?: number;
   totalIngresosExtra?: number;
@@ -26,7 +26,7 @@ export interface Transaccion {
   numero: string;
   descripcion: string;
   descripcionSecundaria?: string;
-  metodo: 'Efectivo' | 'Tarjeta' | 'Transferencia';
+  metodo: 'Efectivo' | 'Yape' | 'Transferencia Bancaria';
   monto: number;
   usuario: string;
   fecha: Timestamp;
@@ -63,7 +63,7 @@ export interface MovimientoManual {
   tipo: 'Ingreso Manual' | 'Egreso Manual';
   monto: number;
   motivo: string;
-  metodo: 'Efectivo' | 'Tarjeta' | 'Transferencia';
+  metodo: 'Efectivo' | 'Yape' | 'Transferencia Bancaria';
   usuario: string;
   fecha: Timestamp;
   sesionCajaId: string;
@@ -72,7 +72,7 @@ export interface MovimientoManual {
 export interface ResumenCaja {
   totalVentas: number;
   totalEfectivo: number;
-  totalTarjetas: number;
+  totalYape: number;
   totalTransferencias: number;
   totalGastos: number;
   totalIngresosExtra: number;

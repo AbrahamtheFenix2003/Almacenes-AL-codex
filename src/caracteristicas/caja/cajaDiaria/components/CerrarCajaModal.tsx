@@ -26,7 +26,7 @@ export default function CerrarCajaModal({
   const [montoFinal, setMontoFinal] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  const totalCalculado = montoInicial + resumen.totalEfectivo - resumen.totalGastos;
+  const totalCalculado = montoInicial + resumen.totalVentas - resumen.totalGastos;
   const diferencia = montoFinal ? parseFloat(montoFinal) - totalCalculado : 0;
 
   const handleConfirm = async () => {
@@ -95,8 +95,8 @@ export default function CerrarCajaModal({
                 <span className="font-semibold">{formatCurrency(resumen.totalEfectivo)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Tarjetas:</span>
-                <span className="font-semibold">{formatCurrency(resumen.totalTarjetas)}</span>
+                <span className="text-gray-600">Yape:</span>
+                <span className="font-semibold">{formatCurrency(resumen.totalYape)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Transferencias:</span>
@@ -112,7 +112,7 @@ export default function CerrarCajaModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="totalCalculado">Total Calculado en Efectivo</Label>
+            <Label htmlFor="totalCalculado">Total Esperado en Caja</Label>
             <Input
               id="totalCalculado"
               value={formatCurrency(totalCalculado)}

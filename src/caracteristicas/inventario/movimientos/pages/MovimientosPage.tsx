@@ -16,7 +16,6 @@ import {
   onSnapshot,
   getDocs,
   query,
-  where,
   orderBy,
 } from "firebase/firestore";
 
@@ -72,39 +71,50 @@ export function MovimientosPage() {
 
   // Listen to movimientos collection in real-time with tipo filter
   useEffect(() => {
-    let movimientosQuery;
-
-    // Apply tipo filter if selected
-    if (tipoMovimiento !== "all") {
-      movimientosQuery = query(
-        collection(db, "movimientos"),
-        where("tipo", "==", tipoMovimiento),
-        orderBy("fecha", "desc")
-      );
-    } else {
-      movimientosQuery = query(
-        collection(db, "movimientos"),
-        orderBy("fecha", "desc")
-      );
-    }
+    const movimientosQuery = query(
+      collection(db, "movimientos"),
+      orderBy("fecha", "desc")
+    );
 
     const unsubscribe = onSnapshot(
       movimientosQuery,
       (snapshot) => {
         const movimientosData = snapshot.docs.map((doc) => {
           const data = doc.data();
+
+          const rawTipo = typeof data.tipo === "string" ? data.tipo.toLowerCase() : "";
+          const tipoNormalizado: Movimiento["tipo"] = rawTipo === "salida"
+            ? "Salida"
+            : rawTipo === "entrada"
+              ? "Entrada"
+              : data.tipo === "Salida" || data.tipo === "Entrada"
+                ? data.tipo
+                : "Entrada";
+
+          const cantidad = Number(data.cantidad) || 0;
+          const precioUnitarioValue = Number(
+            data.precioUnitario ?? data.producto?.precio ?? 0
+          );
+          const totalCalculado = Number(data.total);
+          const total = Number.isFinite(totalCalculado) && !Number.isNaN(totalCalculado)
+            ? totalCalculado
+            : Number((precioUnitarioValue || 0) * cantidad) || 0;
+
           return {
             id: doc.id,
             fechaHora: data.fecha?.toDate().toLocaleString("es-ES") || "",
-            tipo: data.tipo,
+            tipo: tipoNormalizado,
             concepto: data.concepto,
-            producto: data.producto?.nombre || data.productoNombre ? {
-              nombre: data.producto?.nombre || data.productoNombre || "",
-              codigo: data.producto?.codigo || data.productoCodigo || "",
-            } : undefined,
-            cantidad: data.cantidad,
-            precioUnitario: data.precioUnitario,
-            total: data.total,
+            producto:
+              data.producto?.nombre || data.productoNombre
+                ? {
+                    nombre: data.producto?.nombre || data.productoNombre || "",
+                    codigo: data.producto?.codigo || data.productoCodigo || "",
+                  }
+                : undefined,
+            cantidad,
+            precioUnitario: Number.isFinite(precioUnitarioValue) ? precioUnitarioValue : undefined,
+            total,
             documento: data.documento || data.numeroDocumento || "",
             usuario: data.usuario || "Sistema",
             clienteNombre: data.clienteNombre,
@@ -122,11 +132,16 @@ export function MovimientosPage() {
     );
 
     return () => unsubscribe();
-  }, [tipoMovimiento]);
+  }, []);
 
   // Filter movements by search term and period
   const movimientosFiltrados = useMemo(() => {
     let filtered = movimientos;
+
+    // Filter by tipo (local filtering)
+    if (tipoMovimiento !== "all") {
+      filtered = filtered.filter((m) => m.tipo === tipoMovimiento);
+    }
 
     // Filter by search term (local filtering)
     if (searchTerm) {
@@ -167,7 +182,7 @@ export function MovimientosPage() {
     }
 
     return filtered;
-  }, [movimientos, searchTerm, periodo]);
+  }, [movimientos, searchTerm, periodo, tipoMovimiento]);
 
   const handleRegisterMovement = async (formData: MovementFormData) => {
     try {
@@ -212,6 +227,8 @@ export function MovimientosPage() {
         const newMovementRef = doc(collection(db, "movimientos"));
 
         // Create movement record
+        const total = formData.cantidad * formData.precioUnitario;
+
         transaction.set(newMovementRef, {
           tipo: formData.tipo,
           concepto: formData.concepto,
@@ -220,6 +237,7 @@ export function MovimientosPage() {
           productoCodigo: productData.codigo,
           cantidad: formData.cantidad,
           precioUnitario: formData.precioUnitario,
+          total,
           numeroDocumento: formData.numeroDocumento,
           almacen: formData.almacen,
           observaciones: formData.observaciones,

@@ -28,7 +28,7 @@ export default function CajaDiariaPage() {
   const [resumen, setResumen] = useState<ResumenCaja>({
     totalVentas: 0,
     totalEfectivo: 0,
-    totalTarjetas: 0,
+    totalYape: 0,
     totalTransferencias: 0,
     totalGastos: 0,
     totalIngresosExtra: 0
@@ -101,7 +101,7 @@ export default function CajaDiariaPage() {
             numero: data.numeroVenta || '',
             descripcion: `Venta - ${data.clienteNombre || 'Cliente'}`,
             descripcionSecundaria: data.clienteNombre,
-            metodo: (data.metodoPago || 'Efectivo') as 'Efectivo' | 'Tarjeta' | 'Transferencia',
+            metodo: (data.metodoPago || 'Efectivo') as 'Efectivo' | 'Yape' | 'Transferencia Bancaria',
             monto: Number(data.total) || 0,
             usuario: data.usuario || '',
             fecha: data.fecha
@@ -142,7 +142,7 @@ export default function CajaDiariaPage() {
           numero: data.numero || '',
           descripcion: data.descripcion || '',
           descripcionSecundaria: data.descripcionSecundaria,
-          metodo: data.metodo as 'Efectivo' | 'Tarjeta' | 'Transferencia',
+          metodo: data.metodo as 'Efectivo' | 'Yape' | 'Transferencia Bancaria',
           monto: Number(data.monto) || 0,
           usuario: data.usuario || '',
           fecha: data.fecha,
@@ -168,7 +168,7 @@ export default function CajaDiariaPage() {
     const nuevoResumen: ResumenCaja = {
       totalVentas: 0,
       totalEfectivo: 0,
-      totalTarjetas: 0,
+      totalYape: 0,
       totalTransferencias: 0,
       totalGastos: 0,
       totalIngresosExtra: 0
@@ -182,9 +182,9 @@ export default function CajaDiariaPage() {
 
         if (t.metodo === 'Efectivo') {
           nuevoResumen.totalEfectivo += monto;
-        } else if (t.metodo === 'Tarjeta') {
-          nuevoResumen.totalTarjetas += monto;
-        } else if (t.metodo === 'Transferencia') {
+        } else if (t.metodo === 'Yape') {
+          nuevoResumen.totalYape += monto;
+        } else if (t.metodo === 'Transferencia Bancaria') {
           nuevoResumen.totalTransferencias += monto;
         }
       } else if (t.tipo === 'Gasto' || t.tipo === 'Pago' || t.tipo === 'Egreso Manual') {
@@ -195,9 +195,9 @@ export default function CajaDiariaPage() {
         // Los ingresos manuales también se suman al método correspondiente
         if (t.metodo === 'Efectivo') {
           nuevoResumen.totalEfectivo += monto;
-        } else if (t.metodo === 'Tarjeta') {
-          nuevoResumen.totalTarjetas += monto;
-        } else if (t.metodo === 'Transferencia') {
+        } else if (t.metodo === 'Yape') {
+          nuevoResumen.totalYape += monto;
+        } else if (t.metodo === 'Transferencia Bancaria') {
           nuevoResumen.totalTransferencias += monto;
         }
       }
@@ -207,12 +207,12 @@ export default function CajaDiariaPage() {
 
     // Actualizar totales en la sesión
     if (sesionActual && sesionActual.id && sesionActual.estado === 'Abierta') {
-      const totalCalculado = (sesionActual.montoInicial || 0) + nuevoResumen.totalEfectivo - nuevoResumen.totalGastos;
+      const totalCalculado = (sesionActual.montoInicial || 0) + nuevoResumen.totalVentas - nuevoResumen.totalGastos;
 
       updateDoc(doc(db, 'sesionesCaja', sesionActual.id), {
         totalVentas: nuevoResumen.totalVentas,
         totalEfectivo: nuevoResumen.totalEfectivo,
-        totalTarjetas: nuevoResumen.totalTarjetas,
+        totalYape: nuevoResumen.totalYape,
         totalTransferencias: nuevoResumen.totalTransferencias,
         totalGastos: nuevoResumen.totalGastos,
         totalIngresosExtra: nuevoResumen.totalIngresosExtra,
@@ -232,7 +232,7 @@ export default function CajaDiariaPage() {
         usuarioApertura: userName,
         totalVentas: 0,
         totalEfectivo: 0,
-        totalTarjetas: 0,
+        totalYape: 0,
         totalTransferencias: 0,
         totalGastos: 0,
         totalIngresosExtra: 0,
@@ -248,7 +248,7 @@ export default function CajaDiariaPage() {
     if (!sesionActual || !sesionActual.id) return;
 
     try {
-      const totalCalculado = (sesionActual.montoInicial || 0) + resumen.totalEfectivo - resumen.totalGastos;
+      const totalCalculado = (sesionActual.montoInicial || 0) + resumen.totalVentas - resumen.totalGastos;
       const diferencia = montoFinal - totalCalculado;
 
       await updateDoc(doc(db, 'sesionesCaja', sesionActual.id), {
@@ -268,7 +268,7 @@ export default function CajaDiariaPage() {
   const handleAgregarIngreso = async (datos: {
     monto: number;
     motivo: string;
-    metodo: 'Efectivo' | 'Tarjeta' | 'Transferencia';
+    metodo: 'Efectivo' | 'Yape' | 'Transferencia Bancaria';
   }) => {
     if (!sesionActual || !sesionActual.id) return;
 
@@ -294,7 +294,7 @@ export default function CajaDiariaPage() {
   const handleAgregarEgreso = async (datos: {
     monto: number;
     motivo: string;
-    metodo: 'Efectivo' | 'Tarjeta' | 'Transferencia';
+    metodo: 'Efectivo' | 'Yape' | 'Transferencia Bancaria';
   }) => {
     if (!sesionActual || !sesionActual.id) return;
 

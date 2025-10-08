@@ -22,6 +22,7 @@ export interface Client {
   email?: string;
   telefono?: string;
   direccion?: string;
+  tipo?: 'Individual' | 'Empresa';
   fechaCreacion?: Timestamp;
 }
 
@@ -52,6 +53,7 @@ export interface Sale {
   fecha: Timestamp;
   clienteId: string;
   clienteNombre: string;
+  tipo?: 'Individual' | 'Empresa';
   items: SaleItem[];
   subtotal: number;
   total: number;
