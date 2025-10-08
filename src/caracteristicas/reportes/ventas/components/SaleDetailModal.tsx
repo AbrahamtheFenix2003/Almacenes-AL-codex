@@ -13,14 +13,18 @@ interface Props {
 export function SaleDetailModal({ venta, isOpen, onClose }: Props) {
   if (!venta) return null;
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('es-ES', {
+  const formatDate = (dateInput: Date | string) => {
+    const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if (Number.isNaN(date.getTime())) {
+      return 'Fecha no disponible';
+    }
+    return new Intl.DateTimeFormat('es-PE', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true
     }).format(date);
   };
 
@@ -57,7 +61,7 @@ export function SaleDetailModal({ venta, isOpen, onClose }: Props) {
                 <Calendar className="h-4 w-4" />
                 <span>Fecha de Venta</span>
               </div>
-              <p className="text-base font-medium">{formatDate(venta.fecha)}</p>
+              <p className="text-base font-medium">{formatDate(venta.fechaCompleta)}</p>
             </div>
 
             <div className="space-y-2">

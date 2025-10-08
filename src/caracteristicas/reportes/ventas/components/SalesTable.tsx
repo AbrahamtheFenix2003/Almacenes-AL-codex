@@ -9,6 +9,7 @@ import type { SaleItem } from '@/caracteristicas/ventas/puntoDeVenta/types';
 export interface VentaReporte {
   numero: string;
   fecha: string;
+  fechaCompleta: Date;
   cliente: string;
   tipo: 'Individual' | 'Empresa';
   productos: number;

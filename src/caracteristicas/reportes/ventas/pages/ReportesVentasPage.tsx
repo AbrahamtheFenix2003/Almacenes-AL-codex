@@ -73,12 +73,36 @@ export function ReportesVentasPage() {
     }
   });
 
-  const procesarFecha = (f: VentaFirestore['fecha']): string => {
-    if (!f) return '';
-    if (typeof f === 'string') return f.split('T')[0];
-    if (f instanceof Date) return f.toISOString().split('T')[0];
-    if (typeof f === 'object' && 'toDate' in f) return f.toDate().toISOString().split('T')[0];
-    return '';
+  const obtenerFechaVenta = (f: VentaFirestore['fecha'] | VentaFirestore['creadoEn']): Date => {
+    if (!f) return new Date(0);
+    if (f instanceof Date) return f;
+    if (f instanceof Timestamp) return f.toDate();
+    if (typeof f === 'string') {
+      const parsed = new Date(f);
+      if (!Number.isNaN(parsed.getTime())) return parsed;
+    }
+    if (typeof f === 'number') {
+      const parsed = new Date(f);
+      if (!Number.isNaN(parsed.getTime())) return parsed;
+    }
+    if (typeof f === 'object' && 'toDate' in f) {
+      try {
+        const parsed = f.toDate();
+        if (parsed instanceof Date && !Number.isNaN(parsed.getTime())) {
+          return parsed;
+        }
+      } catch {
+        // ignored
+      }
+    }
+    return new Date(0);
+  };
+
+  const formatearFechaCorta = (date: Date): string => {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime()) || date.getTime() === 0) {
+      return '';
+    }
+    return date.toISOString().split('T')[0];
   };
 
   const resolverNumeroOrden = (numero: string): number => {
@@ -119,9 +143,13 @@ export function ReportesVentasPage() {
         // Estimar margen promedio (25% por defecto si no existe)
         const margenEstimado = 25;
         
+        const fechaVenta = obtenerFechaVenta(d.fecha ?? d.creadoEn ?? new Date());
+        const fechaSegura = Number.isNaN(fechaVenta.getTime()) || fechaVenta.getTime() === 0 ? new Date() : fechaVenta;
+
         data.push({
           numero: d.numeroVenta,
-          fecha: procesarFecha(d.fecha ?? d.creadoEn ?? new Date()),
+          fecha: formatearFechaCorta(fechaSegura),
+          fechaCompleta: fechaSegura,
           cliente: d.clienteNombre ?? 'Cliente',
           tipo: tipoCliente as 'Individual' | 'Empresa',
           productos: cantidadProductos,
