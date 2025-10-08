@@ -25,14 +25,25 @@ export interface Client {
   fechaCreacion?: Timestamp;
 }
 
+// Objeto para el descuento
+export interface DescuentoManual {
+  monto: number;
+  motivo: string;
+  descripcionAdicional?: string; // Opcional
+}
+
 // Item del carrito (interfaz de UI)
 export interface CartItem {
   id: string;
   nombre: string;
   codigo: string;
-  precio: number;
+  precio: number; // Representa el precioUnitarioOriginal
   cantidad: number;
   stockDisponible: number;
+
+  // --- NUEVOS CAMPOS ---
+  subtotalModificado?: number; // Para guardar temporalmente el nuevo subtotal
+  descuentoManual?: DescuentoManual;
 }
 
 // Venta para guardar en Firestore
@@ -55,8 +66,12 @@ export interface SaleItem {
   productoNombre: string;
   productoCodigo: string;
   cantidad: number;
-  precioUnitario: number;
+  precioUnitario: number; // Este será el precio final efectivo
   subtotal: number;
+
+  // --- NUEVOS CAMPOS ---
+  precioUnitarioOriginal?: number;
+  descuentoManual?: DescuentoManual;
 }
 
 // Movimiento de inventario

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import type { SaleItem } from '@/caracteristicas/ventas/puntoDeVenta/types';
 
 export interface VentaReporte {
   numero: string;
@@ -11,8 +12,9 @@ export interface VentaReporte {
   cliente: string;
   tipo: 'Individual' | 'Empresa';
   productos: number;
+  items: SaleItem[];
   total: number;
-  metodoPago: 'Efectivo' | 'Tarjeta' | 'Transferencia' | 'SINPE';
+  metodoPago: 'Efectivo' | 'Tarjeta' | 'Transferencia' | 'SINPE' | 'Yape' | 'Transferencia Bancaria';
   vendedor: string;
   margen: number;
 }

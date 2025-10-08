@@ -109,6 +109,7 @@ export function MovimientosPage() {
             usuario: data.usuario || "Sistema",
             clienteNombre: data.clienteNombre,
             ventaId: data.ventaId,
+            descuento: data.descuento,
           } as Movimiento;
         });
         setMovimientos(movimientosData);
@@ -413,6 +414,22 @@ export function MovimientosPage() {
                     )}
                   </div>
                 </div>
+
+                {movimientoAVer.descuento && (
+                  <div className="border-t pt-6">
+                    <h4 className="text-sm font-semibold mb-4">Justificación de Descuento</h4>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Motivo</p>
+                      <p className="text-base font-medium">{movimientoAVer.descuento.motivo}</p>
+                    </div>
+                    {movimientoAVer.descuento.descripcionAdicional && (
+                      <div className="space-y-2 mt-4">
+                        <p className="text-sm text-muted-foreground">Descripción Adicional</p>
+                        <p className="text-base font-medium">{movimientoAVer.descuento.descripcionAdicional}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           )}

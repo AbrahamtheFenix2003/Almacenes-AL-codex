@@ -14,4 +14,8 @@ export interface Movimiento {
   usuario: string;
   clienteNombre?: string;
   ventaId?: string;
+  descuento?: {
+    motivo: string;
+    descripcionAdicional?: string;
+  };
 }

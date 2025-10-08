@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { SalesSummaryStats } from '../components/SalesSummaryStats';
 import { SalesFilters } from '../components/SalesFilters';
 import { SalesTable, type VentaReporte } from '../components/SalesTable';
+import type { DescuentoManual } from '@/caracteristicas/ventas/puntoDeVenta/types';
 import { SalesByDayChart } from '../components/SalesByDayChart';
 import { SalesByPaymentMethodChart } from '../components/SalesByPaymentMethodChart';
 import { SaleDetailModal } from '../components/SaleDetailModal';
@@ -22,6 +23,8 @@ interface ItemVenta {
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
+  precioUnitarioOriginal?: number;
+  descuentoManual?: DescuentoManual;
 }
 
 interface VentaFirestore {
@@ -103,6 +106,7 @@ export function ReportesVentasPage() {
           cliente: d.clienteNombre ?? 'Cliente',
           tipo: tipoCliente as 'Individual' | 'Empresa',
           productos: cantidadProductos,
+          items: d.items ?? [],
           total: d.total ?? 0,
           metodoPago: (d.metodoPago ?? 'Efectivo') as VentaReporte['metodoPago'],
           vendedor: d.usuario ?? 'Sistema',

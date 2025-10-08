@@ -9,7 +9,7 @@ import ProductSearch from '../components/ProductSearch';
 import ProductGrid from '../components/ProductGrid';
 import ShoppingCart from '../components/ShoppingCart';
 import { formatCurrency } from '@/lib/utils';
-import type { Product, CartItem, Client, Sale, SaleItem, Movement } from '../types';
+import type { Product, CartItem, Client, Sale, SaleItem, Movement, DescuentoManual } from '../types';
 
 export default function PuntoDeVentaPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -137,6 +137,20 @@ export default function PuntoDeVentaPage() {
     setCartItems([]);
   };
 
+  const handleApplyDiscount = (itemId: string, discount: DescuentoManual, newSubtotal: number) => {
+    setCartItems(prevItems =>
+      prevItems.map(item =>
+        item.id === itemId
+          ? {
+              ...item,
+              descuentoManual: discount,
+              subtotalModificado: newSubtotal,
+            }
+          : item
+      )
+    );
+  };
+
   const handleRequestProcessSale = () => {
     if (cartItems.length === 0) {
       toast({
@@ -199,14 +213,26 @@ export default function PuntoDeVentaPage() {
         }
 
         // 3. Crear documento de venta
-        const saleItems: SaleItem[] = cartItems.map((item) => ({
-          productoId: item.id,
-          productoNombre: item.nombre,
-          productoCodigo: item.codigo,
-          cantidad: item.cantidad,
-          precioUnitario: item.precio,
-          subtotal: item.precio * item.cantidad,
-        }));
+        const saleItems: SaleItem[] = cartItems.map((item) => {
+          const subtotal = item.subtotalModificado ?? item.precio * item.cantidad;
+          const precioUnitario = subtotal / item.cantidad;
+
+          const saleItem: SaleItem = {
+            productoId: item.id,
+            productoNombre: item.nombre,
+            productoCodigo: item.codigo,
+            cantidad: item.cantidad,
+            precioUnitario: precioUnitario,
+            subtotal: subtotal,
+          };
+
+          if (item.descuentoManual) {
+            saleItem.precioUnitarioOriginal = item.precio;
+            saleItem.descuentoManual = item.descuentoManual;
+          }
+
+          return saleItem;
+        });
 
         const subtotal = saleItems.reduce((sum, item) => sum + item.subtotal, 0);
         const total = subtotal;
@@ -236,6 +262,7 @@ export default function PuntoDeVentaPage() {
             precioUnitario: number;
             total: number;
             documento: string;
+            descuento?: { motivo: string; descripcionAdicional?: string };
           } = {
             fecha: serverTimestamp(),
             concepto: 'Venta',
@@ -248,11 +275,21 @@ export default function PuntoDeVentaPage() {
             total: item.subtotal,
             documento: numeroVenta,
             ventaId: ventaRef.id,
-
             usuario: user.email || 'Usuario',
             observaciones: `Venta ${numeroVenta} - Cliente: ${clienteSeleccionado.nombre}`,
             creadoEn: serverTimestamp(),
           };
+
+          if (item.descuentoManual) {
+            movementData.descuento = {
+              motivo: item.descuentoManual.motivo,
+            };
+
+            // Solo añadir descripcionAdicional si existe
+            if (item.descuentoManual.descripcionAdicional) {
+              movementData.descuento.descripcionAdicional = item.descuentoManual.descripcionAdicional;
+            }
+          }
 
           const movementRef = doc(collection(db, 'movimientos'));
           transaction.set(movementRef, movementData);
@@ -338,6 +375,7 @@ export default function PuntoDeVentaPage() {
             onRemoveItem={handleRemoveItem}
             onClearCart={handleClearCart}
             onProcessSale={handleRequestProcessSale}
+            onApplyDiscount={handleApplyDiscount}
             processing={processing}
           />
         </div>
@@ -360,7 +398,7 @@ export default function PuntoDeVentaPage() {
               <li>
                 Total de la venta:{' '}
                 <strong>
-                  {formatCurrency(cartItems.reduce((sum, item) => sum + item.precio * item.cantidad, 0))}
+                  {formatCurrency(cartItems.reduce((sum, item) => sum + (item.subtotalModificado ?? item.precio * item.cantidad), 0))}
                 </strong>
               </li>
             </ul>
