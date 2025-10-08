@@ -51,6 +51,7 @@ export function ProductosPage() {
   // Estados para filtros
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
 
   useEffect(() => {
     setLoading(true);
@@ -242,16 +243,22 @@ export function ProductosPage() {
   };
 
   // Filtrar productos localmente por término de búsqueda
+  const searchLower = searchTerm.toLowerCase();
   const productosFiltrados = productos.filter((producto) => {
-    if (!searchTerm) return true;
-
-    const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch =
+      !searchTerm ||
       producto.nombre.toLowerCase().includes(searchLower) ||
       producto.codigo.toLowerCase().includes(searchLower) ||
       producto.categoria.toLowerCase().includes(searchLower) ||
-      producto.proveedor.toLowerCase().includes(searchLower)
-    );
+      producto.proveedor.toLowerCase().includes(searchLower);
+
+    if (!matchesSearch) return false;
+
+    if (selectedStatus && producto.estado !== selectedStatus) {
+      return false;
+    }
+
+    return true;
   });
 
   return (
@@ -276,8 +283,10 @@ export function ProductosPage() {
       <ProductFilters
         searchTerm={searchTerm}
         selectedCategory={selectedCategory}
+        selectedStatus={selectedStatus}
         onSearchChange={setSearchTerm}
         onCategoryChange={setSelectedCategory}
+        onStatusChange={setSelectedStatus}
       />
       <ProductTable
         productos={productosFiltrados}

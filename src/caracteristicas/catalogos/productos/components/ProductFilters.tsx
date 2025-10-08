@@ -6,15 +6,19 @@ import { Button } from "@/components/ui/button";
 interface ProductFiltersProps {
   searchTerm: string;
   selectedCategory: string;
+  selectedStatus: string;
   onSearchChange: (term: string) => void;
   onCategoryChange: (category: string) => void;
+  onStatusChange: (status: string) => void;
 }
 
 export function ProductFilters({
   searchTerm,
   selectedCategory,
+  selectedStatus,
   onSearchChange,
   onCategoryChange,
+  onStatusChange,
 }: ProductFiltersProps) {
   return (
     <div className="rounded-[var(--radius-xl)] border border-[color:var(--border)] bg-[color:var(--card)]/95 p-5">
@@ -45,6 +49,18 @@ export function ProductFilters({
             <option value="Ropa">Ropa</option>
             <option value="Alimentos">Alimentos</option>
             <option value="Otros">Otros</option>
+          </Select>
+
+          <Select
+            aria-label="Filtrar por estado"
+            value={selectedStatus}
+            onChange={(e) => onStatusChange(e.target.value)}
+            className="min-w-[180px]"
+          >
+            <option value="">Todos los estados</option>
+            <option value="Activo">Activo</option>
+            <option value="Stock Bajo">Stock Bajo</option>
+            <option value="Agotado">Agotado</option>
           </Select>
 
           <Button
