@@ -13,6 +13,7 @@ import {
   orderBy
 } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
+import { getFechaLocal } from '@/lib/utils';
 import CashBalanceCard from '../components/CashBalanceCard';
 import SalesSummary from '../components/SalesSummary';
 import TransactionsTable from '../components/TransactionsTable';
@@ -40,7 +41,9 @@ export default function CajaDiariaPage() {
   const [loading, setLoading] = useState(true);
 
   const userName = auth.currentUser?.displayName || auth.currentUser?.email || 'Usuario';
-  const fechaHoy = new Date().toISOString().split('T')[0];
+  
+  // Usar función utilitaria para calcular fecha local
+  const fechaHoy = getFechaLocal();
 
   // Buscar sesión de caja ABIERTA del día actual
   useEffect(() => {
@@ -53,10 +56,14 @@ export default function CajaDiariaPage() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
         const doc = snapshot.docs[0];
-        setSesionActual({ id: doc.id, ...doc.data() } as SesionCaja);
+        const sessionData = { id: doc.id, ...doc.data() } as SesionCaja;
+        setSesionActual(sessionData);
       } else {
         setSesionActual(null);
       }
+      setLoading(false);
+    }, (error) => {
+      console.error('Error al cargar sesión de caja:', error);
       setLoading(false);
     });
 
